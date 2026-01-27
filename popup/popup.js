@@ -328,8 +328,9 @@ class SofaScoutApp {
 
             <div class="heatmap-container">
                 <div class="tournament-selector">
+                    <span class="tournament-selector-label">Isı Haritası</span>
                     <select id="tournamentSelect" class="tournament-select">
-                        <option value="">Turnuva yükleniyor...</option>
+                        <option value="">Yükleniyor...</option>
                     </select>
                 </div>
                 <div id="heatmapLoading" class="skeleton skeleton-heatmap"></div>
@@ -397,12 +398,13 @@ class SofaScoutApp {
 
       if (tournamentsData.tournaments && tournamentsData.tournaments.length > 0) {
         // Add "All Tournaments" option
-        select.innerHTML = '<option value="all">Tüm Turnuvalar (Sezon)</option>';
+        select.innerHTML = '<option value="all">📊 Tüm Turnuvalar</option>';
 
         tournamentsData.tournaments.forEach(t => {
           const option = document.createElement('option');
           option.value = JSON.stringify({ id: t.id, seasonId: t.seasonId });
-          option.textContent = `${t.name} - ${t.seasonName}`;
+          // Sadece turnuva adı göster (kısa ve temiz)
+          option.textContent = t.name;
           select.appendChild(option);
         });
 
