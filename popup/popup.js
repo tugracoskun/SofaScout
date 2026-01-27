@@ -225,12 +225,19 @@ class SofaScoutApp {
         // Search via API
         const results = await chrome.runtime.sendMessage({ action: 'searchPlayer', query });
         // Render search results
-        // (Simplified rendering logic for search results)
         const playerFallback = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"><rect fill="%23171C1F" width="40" height="40"/><g fill="none" stroke="%236B7280" stroke-width="1.5" transform="translate(10,8)"><circle cx="10" cy="6" r="5"/><path d="M0 22v-2a8 8 0 0 1 8-8h4a8 8 0 0 1 8 8v2"/></g></svg>';
 
         if (results && results.length > 0) {
+          // Store search results in state for later access
+          this.state.searchResults = results.map(p => ({
+            id: p.id,
+            name: p.name,
+            team: p.team?.name || 'Unknown',
+            rating: '-'
+          }));
+
           playersList.innerHTML = results.map(p => `
-                  <div class="player-card" data-id="${p.id}">
+                  <div class="player-card" data-id="${p.id}" data-name="${p.name}" data-team="${p.team?.name || 'Unknown'}">
                     <div class="player-avatar">
                       <img src="https://api.sofascore.app/api/v1/player/${p.id}/image" alt="${p.name}" 
                            onerror="this.src='data:image/svg+xml,${encodeURIComponent(playerFallback)}'">
@@ -247,23 +254,34 @@ class SofaScoutApp {
       }, 500);
     });
 
-    document.querySelectorAll('.player-card').forEach(card => {
-      card.addEventListener('click', () => {
+    // Use Event Delegation for Player Clicks (Handles both initial and dynamic items)
+    playersList?.addEventListener('click', (e) => {
+      const card = e.target.closest('.player-card');
+      if (card) {
         const id = card.dataset.id;
-        this.showPlayerDetails(id);
-      });
+        const name = card.dataset.name || card.querySelector('.player-name')?.textContent;
+        const team = card.dataset.team || card.querySelector('.player-team')?.textContent;
+        this.showPlayerDetails(id, name, team);
+      }
     });
   }
 
   filterPlayers(query) {
-    // Local filter deprecated in favor of API search for simplicity in this step, 
-    // but can be re-added for filtering favorites.
+    // Local filter deprecated in favor of API search
   }
 
-  async showPlayerDetails(playerId) {
+  async showPlayerDetails(playerId, playerName, playerTeam) {
     const detailView = document.getElementById('playerDetail');
     const content = document.getElementById('detailContent');
-    const player = this.state.players.find(p => p.id == playerId);
+
+    // Try to find player from favorites or search results, or use passed parameters
+    let player = this.state.players.find(p => p.id == playerId);
+    if (!player && this.state.searchResults) {
+      player = this.state.searchResults.find(p => p.id == playerId);
+    }
+    if (!player && playerName) {
+      player = { id: playerId, name: playerName, team: playerTeam || 'Unknown', rating: '-' };
+    }
 
     if (!detailView || !content || !player) return;
 
@@ -317,8 +335,8 @@ class SofaScoutApp {
             <div class="scout-notes-section" style="margin-top: 20px;">
                 <div class="section-header" style="justify-content: space-between;">
                     <h3 style="font-size: 14px; margin: 0;">Scout Notları</h3>
-                    <button id="exportBtn" class="action-btn" style="font-size: 11px; padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-primary); cursor: pointer;">
-                        📥 Excel'e Aktar
+                    <button id="downloadHeatmapBtn" class="action-btn" style="font-size: 11px; padding: 4px 8px; border-radius: 4px; border: 1px solid var(--accent-primary); background: var(--bg-card); color: var(--accent-primary); cursor: pointer;">
+                        📷 Heatmap İndir
                     </button>
                 </div>
                 <textarea id="scoutNoteInput" placeholder="Oyuncu hakkında notlar al... (Otomatik kaydedilir)" 
@@ -360,9 +378,9 @@ class SofaScoutApp {
         }, 1000);
       });
 
-      // Export to Excel Listener
-      document.getElementById('exportBtn').addEventListener('click', () => {
-        this.exportToExcel(player);
+      // Download Heatmap as PNG Listener
+      document.getElementById('downloadHeatmapBtn').addEventListener('click', () => {
+        this.downloadHeatmapAsPNG(player);
       });
 
       // Draw Heatmap
@@ -373,18 +391,36 @@ class SofaScoutApp {
     }
   }
 
-  exportToExcel(player) {
-    const note = document.getElementById('scoutNoteInput').value || '';
-    // Create CSV content with BOM for Excel UTF-8 support
-    const bom = "\uFEFF";
-    const csvContent = `${bom}Oyuncu Adı;Takım;Rating;Gol;Asist;Notlar\n` +
-      `${player.name};${player.team};${player.rating};-;-;"${note.replace(/"/g, '""')}"`;
+  downloadHeatmapAsPNG(player) {
+    const canvas = document.getElementById('playerHeatmap');
+    if (!canvas) return;
 
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
+    // Create a higher quality version for download
+    const downloadCanvas = document.createElement('canvas');
+    const scale = 2; // 2x resolution for HD quality
+    downloadCanvas.width = canvas.width * scale;
+    downloadCanvas.height = canvas.height * scale;
+
+    const ctx = downloadCanvas.getContext('2d');
+    ctx.scale(scale, scale);
+
+    // Draw dark background
+    ctx.fillStyle = '#1a2228';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Copy original heatmap
+    ctx.drawImage(canvas, 0, 0);
+
+    // Add player name watermark
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    ctx.font = 'bold 14px Poppins, sans-serif';
+    ctx.fillText(`${player.name} - Isı Haritası`, 10, canvas.height - 10);
+
+    // Convert to PNG and download
+    const dataUrl = downloadCanvas.toDataURL('image/png', 1.0);
     const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', `${player.name}_scout_raporu.csv`);
+    link.download = `${player.name}_heatmap.png`;
+    link.href = dataUrl;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
