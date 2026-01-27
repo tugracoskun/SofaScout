@@ -377,34 +377,59 @@ async function getPlayerTournaments(playerId) {
     }
 }
 
-// Get heatmap for a specific tournament
+// Get heatmap for a specific tournament (tries SVG first, then falls back to points)
 async function getTournamentHeatmap(playerId, tournamentId, seasonId) {
     try {
-        const response = await fetch(
-            `https://api.sofascore.com/api/v1/player/${playerId}/unique-tournament/${tournamentId}/season/${seasonId}/heatmap/overall`
-        );
+        const url = `https://api.sofascore.com/api/v1/player/${playerId}/unique-tournament/${tournamentId}/season/${seasonId}/heatmap/overall`;
+
+        console.log('Fetching heatmap from:', url);
+
+        const response = await fetch(url);
 
         if (!response.ok) {
+            console.log('Heatmap response not OK:', response.status);
             return { error: 'not_found' };
         }
 
-        const data = await response.json();
+        const contentType = response.headers.get('content-type');
+        console.log('Content-Type:', contentType);
+
+        // Get raw text first for debugging
+        const rawText = await response.text();
+        console.log('Raw response (first 500 chars):', rawText.substring(0, 500));
+
+        // Check if response is SVG
+        if (contentType && contentType.includes('svg')) {
+            return { success: true, svg: rawText, type: 'svg' };
+        }
+
+        // Check if response starts with < (might be SVG/XML without correct content-type)
+        if (rawText.trim().startsWith('<')) {
+            console.log('Response looks like SVG/XML!');
+            return { success: true, svg: rawText, type: 'svg' };
+        }
+
+        // Parse as JSON
+        const data = JSON.parse(rawText);
+        console.log('Parsed JSON keys:', Object.keys(data));
 
         // Extract points
         let points = null;
         if (Array.isArray(data)) {
             points = data;
+            console.log('Data is array with', data.length, 'items');
         } else if (data.heatmap && Array.isArray(data.heatmap)) {
             points = data.heatmap;
+            console.log('Found data.heatmap with', points.length, 'items');
         } else if (data.heatmapPoints) {
             points = data.heatmapPoints;
         } else if (data.points) {
             points = data.points;
         }
 
-        return { success: true, heatmap: points };
+        return { success: true, heatmap: points, type: 'points', rawKeys: Object.keys(data) };
     } catch (error) {
         console.error('Error fetching tournament heatmap:', error);
-        return { error: 'network_error' };
+        return { error: 'network_error', message: error.message };
     }
 }
