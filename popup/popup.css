@@ -34,15 +34,17 @@ body {
   background: var(--bg-primary);
   color: var(--text-primary);
   width: 380px;
-  min-height: 520px;
-  overflow-x: hidden;
+  height: 520px;
+  overflow: hidden;
+  scrollbar-gutter: stable;
 }
 
 .app-container {
   display: flex;
   flex-direction: column;
-  min-height: 520px;
+  height: 100%;
   background: linear-gradient(180deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
+  overflow: hidden;
 }
 
 /* Header */
@@ -127,6 +129,17 @@ body {
   background: var(--accent-gradient);
   color: var(--bg-primary);
   font-weight: 600;
+  box-shadow: var(--shadow-sm);
+}
+
+/* Metin kalınlaştığında buton genişliğinin değişmesini engellemek için */
+.nav-tab::after {
+  content: attr(data-tab-name);
+  display: block;
+  font-weight: 600;
+  height: 0;
+  overflow: hidden;
+  visibility: hidden;
 }
 
 /* Main Content */
@@ -139,12 +152,13 @@ body {
 .tab-content {
   display: none;
   opacity: 0;
+  height: 100%;
 }
 
 .tab-content.active {
   display: block;
   opacity: 1;
-  animation: fadeIn 0.2s ease-out;
+  animation: fadeIn 0.15s ease-out;
 }
 
 @keyframes fadeIn {
