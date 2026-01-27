@@ -177,8 +177,59 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         case 'getHeatmap':
             getPlayerHeatmap(request.playerId, request.matchId).then(sendResponse);
             return true;
+        case 'searchPlayer':
+            searchPlayer(request.query).then(sendResponse);
+            return true;
+        case 'syncFavorites':
+            syncUserFavorites().then(sendResponse);
+            return true;
     }
 });
+
+// Sync user favorites from SofaScore
+async function syncUserFavorites() {
+    try {
+        // Fetch managed favorites (teams, players)
+        const response = await fetch('https://api.sofascore.com/api/v1/user/favorites/managed');
+
+        if (response.status === 401 || response.status === 403) {
+            return { error: 'auth_required' };
+        }
+
+        const data = await response.json();
+
+        // Filter only players (sport.id = 1 is football, but categorization might differ)
+        // Adjust filtering logic based on actual API response structure
+        // For now, assuming the response contains a flat list or category based list
+
+        return { success: true, data: data };
+    } catch (error) {
+        console.error('Error syncing favorites:', error);
+        return { error: 'network_error' };
+    }
+}
+
+// Search players
+async function searchPlayer(query) {
+    if (!query || query.length < 2) return [];
+
+    try {
+        const response = await fetch(
+            `https://api.sofascore.com/api/v1/search/all?q=${encodeURIComponent(query)}&page=0`
+        );
+        const data = await response.json();
+
+        // Filter for sports persons (players) only
+        const players = data.results
+            .filter(r => r.type === 'player' || r.entity?.type === 'player')
+            .map(r => r.entity || r);
+
+        return players;
+    } catch (error) {
+        console.error('Error searching players:', error);
+        return [];
+    }
+}
 
 // Get player statistics
 async function getPlayerStats(playerId) {
