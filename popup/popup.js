@@ -90,6 +90,15 @@ class SofaScoutApp {
     const dashboard = document.getElementById('dashboard');
     if (!dashboard) return;
 
+    const icons = {
+      player: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
+      match: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg>',
+      alert: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>',
+      lineup: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11H3M9 17H3M9 5H3M17 11H21M17 17H21M17 5H21M12 2v20"/></svg>',
+      goal: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>',
+      stat: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>'
+    };
+
     dashboard.innerHTML = `
       <div class="section-header">
         <h2>Hızlı Bakış</h2>
@@ -98,17 +107,17 @@ class SofaScoutApp {
       
       <div class="stats-grid">
         <div class="stat-card">
-          <div class="stat-icon players">👤</div>
+          <div class="stat-icon players">${icons.player}</div>
           <span class="stat-value">${this.state.players.length}</span>
           <span class="stat-label">Takip</span>
         </div>
         <div class="stat-card">
-          <div class="stat-icon matches">⚽</div>
+          <div class="stat-icon matches">${icons.match}</div>
           <span class="stat-value">5</span>
           <span class="stat-label">Maç</span>
         </div>
         <div class="stat-card">
-          <div class="stat-icon alerts">🔔</div>
+          <div class="stat-icon alerts">${icons.alert}</div>
           <span class="stat-value">3</span>
           <span class="stat-label">Uyarı</span>
         </div>
@@ -118,7 +127,7 @@ class SofaScoutApp {
         <h3>Son Aktiviteler</h3>
         <div class="activity-list">
           <div class="activity-item">
-            <div class="activity-icon lineup">📋</div>
+            <div class="activity-icon lineup">${icons.lineup}</div>
             <div class="activity-info">
               <span class="activity-title">Kadro Açıklandı</span>
               <span class="activity-desc">Fenerbahçe vs Galatasaray</span>
@@ -126,7 +135,7 @@ class SofaScoutApp {
             </div>
           </div>
           <div class="activity-item">
-            <div class="activity-icon goal">⚽</div>
+            <div class="activity-icon goal">${icons.goal}</div>
             <div class="activity-info">
               <span class="activity-title">Gol Atıldı</span>
               <span class="activity-desc">Arda Güler - 34'</span>
@@ -134,7 +143,7 @@ class SofaScoutApp {
             </div>
           </div>
           <div class="activity-item">
-            <div class="activity-icon stat">📊</div>
+            <div class="activity-icon stat">${icons.stat}</div>
             <div class="activity-info">
               <span class="activity-title">Rating Güncellendi</span>
               <span class="activity-desc">Kenan Yıldız - 7.8</span>
@@ -150,11 +159,14 @@ class SofaScoutApp {
     const container = document.getElementById('players');
     if (!container) return;
 
+    const searchIcon = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>';
+    const playerFallback = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"><rect fill="%23171C1F" width="40" height="40"/><g fill="none" stroke="%236B7280" stroke-width="1.5" transform="translate(10,8)"><circle cx="10" cy="6" r="5"/><path d="M0 22v-2a8 8 0 0 1 8-8h4a8 8 0 0 1 8 8v2"/></g></svg>';
+
     const playersHTML = this.state.players.map(p => `
       <div class="player-card" data-id="${p.id}">
         <div class="player-avatar">
           <img src="https://api.sofascore.app/api/v1/player/${p.id}/image" alt="${p.name}" 
-               onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 40 40%22><rect fill=%22%23171C1F%22 width=%2240%22 height=%2240%22/><text x=%2220%22 y=%2228%22 text-anchor=%22middle%22 fill=%22%23fff%22 font-size=%2218%22>👤</text></svg>'">
+               onerror="this.src='data:image/svg+xml,${encodeURIComponent(playerFallback)}'">
         </div>
         <div class="player-info">
           <span class="player-name">${p.name}</span>
@@ -170,7 +182,7 @@ class SofaScoutApp {
         <button class="add-btn" id="addPlayerBtn">+</button>
       </div>
       <div class="search-box">
-        <span>🔍</span>
+        <span class="search-icon">${searchIcon}</span>
         <input type="text" placeholder="Oyuncu ara..." id="playerSearch">
       </div>
       <div class="players-list">${playersHTML}</div>
