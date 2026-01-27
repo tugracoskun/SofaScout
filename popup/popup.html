@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SofaScout</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="popup.css">
+</head>
+
+<body>
+  <div class="app-container">
+    <header class="header">
+      <div class="header-content">
+        <div class="logo">
+          <span class="logo-text">Sofa<span class="accent">Scout</span></span>
+        </div>
+        <button class="settings-btn" id="settingsBtn" title="Ayarlar">⚙️</button>
+      </div>
+    </header>
+
+    <nav class="nav-tabs">
+      <button class="nav-tab active" data-tab="dashboard">📊 Panel</button>
+      <button class="nav-tab" data-tab="players">👤 Oyuncular</button>
+      <button class="nav-tab" data-tab="matches">⚽ Maçlar</button>
+      <button class="nav-tab" data-tab="notifications">🔔 Bildirimler</button>
+    </nav>
+
+    <main class="main-content">
+      <section class="tab-content active" id="dashboard"></section>
+      <section class="tab-content" id="players"></section>
+      <section class="tab-content" id="matches"></section>
+      <section class="tab-content" id="notifications"></section>
+    </main>
+
+    <footer class="footer">
+      <span>SofaScout v1.0</span>
+    </footer>
+  </div>
+  <script src="popup.js"></script>
+</body>
+
+</html>

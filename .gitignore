@@ -1,0 +1,14 @@
+# OS files
+.DS_Store
+Thumbs.db
+
+# Extension specific
+*.pem
+*.crx
+
+# IDEs
+.vscode/
+.idea/
+
+# Local testing
+test.html

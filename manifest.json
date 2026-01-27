@@ -1,0 +1,43 @@
+{
+    "manifest_version": 3,
+    "name": "SofaScout",
+    "version": "1.0.0",
+    "description": "Scoutlar için profesyonel SofaScore eklentisi - Isı haritaları, istatistikler ve akıllı bildirimler",
+    "icons": {
+        "16": "icons/icon16.svg",
+        "48": "icons/icon48.svg",
+        "128": "icons/icon128.svg"
+    },
+    "action": {
+        "default_popup": "popup/popup.html",
+        "default_icon": {
+            "16": "icons/icon16.svg",
+            "48": "icons/icon48.svg"
+        }
+    },
+    "permissions": [
+        "storage",
+        "notifications",
+        "alarms"
+    ],
+    "host_permissions": [
+        "https://api.sofascore.com/*",
+        "https://www.sofascore.com/*"
+    ],
+    "background": {
+        "service_worker": "background/service-worker.js"
+    },
+    "content_scripts": [
+        {
+            "matches": [
+                "https://www.sofascore.com/*"
+            ],
+            "js": [
+                "content/content.js"
+            ],
+            "css": [
+                "content/content.css"
+            ]
+        }
+    ]
+}

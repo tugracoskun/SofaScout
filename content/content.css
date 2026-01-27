@@ -1,0 +1,203 @@
+/* SofaScore Scout Pro - Content Script Styles */
+
+/* Tracked player indicator */
+.scout-pro-tracked {
+    position: relative;
+}
+
+.scout-pro-tracked::after {
+    content: '';
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 10px;
+    height: 10px;
+    background: linear-gradient(135deg, #00D4AA 0%, #00B894 100%);
+    border-radius: 50%;
+    box-shadow: 0 0 8px rgba(0, 212, 170, 0.5);
+    animation: scoutPulse 2s infinite;
+}
+
+@keyframes scoutPulse {
+
+    0%,
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 0.7;
+        transform: scale(1.1);
+    }
+}
+
+/* Quick action button on player pages */
+.scout-pro-action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: linear-gradient(135deg, #00D4AA 0%, #00B894 100%);
+    color: #000000;
+    border: none;
+    border-radius: 10px;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    margin-left: 12px;
+}
+
+.scout-pro-action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 212, 170, 0.35);
+}
+
+.scout-pro-action-btn:active {
+    transform: translateY(0);
+}
+
+.scout-pro-action-btn.tracked {
+    background: #171C1F;
+    color: #00D4AA;
+    border: 1px solid #00D4AA;
+}
+
+/* Heatmap overlay button */
+.scout-pro-heatmap-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 56px;
+    height: 56px;
+    background: linear-gradient(135deg, #171C1F 0%, #000000 100%);
+    border: 2px solid #00D4AA;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 9999;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    transition: all 0.3s ease;
+}
+
+.scout-pro-heatmap-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 28px rgba(0, 212, 170, 0.3);
+}
+
+.scout-pro-heatmap-btn svg {
+    width: 24px;
+    height: 24px;
+    color: #00D4AA;
+}
+
+/* Notification toast */
+.scout-pro-toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: #171C1F;
+    color: #fff;
+    padding: 14px 24px;
+    border-radius: 12px;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(0, 212, 170, 0.2);
+    z-index: 10000;
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.scout-pro-toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+.scout-pro-toast.success {
+    border-left: 3px solid #00D4AA;
+}
+
+.scout-pro-toast.error {
+    border-left: 3px solid #EF4444;
+}
+
+/* Match card enhancement */
+.scout-pro-match-indicator {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(180deg, #00D4AA 0%, #00B894 100%);
+    border-radius: 4px 0 0 4px;
+}
+
+/* Stats overlay */
+.scout-pro-stats-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(8px);
+    z-index: 10001;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.scout-pro-stats-overlay.visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+.scout-pro-stats-card {
+    background: #171C1F;
+    border-radius: 20px;
+    padding: 32px;
+    max-width: 480px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.scout-pro-stats-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.scout-pro-stats-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    border-radius: 50%;
+    color: #fff;
+    font-size: 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.scout-pro-stats-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
