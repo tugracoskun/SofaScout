@@ -327,8 +327,13 @@ class SofaScoutApp {
             </div>
 
             <div class="heatmap-container">
-                <span class="heatmap-label">Sezonluk Isı Haritası (Simüle Edilmiş)</span>
-                <canvas id="playerHeatmap" class="heatmap-canvas"></canvas>
+                <div class="tournament-selector">
+                    <select id="tournamentSelect" class="tournament-select">
+                        <option value="">Turnuva yükleniyor...</option>
+                    </select>
+                </div>
+                <div id="heatmapLoading" class="skeleton skeleton-heatmap"></div>
+                <canvas id="playerHeatmap" class="heatmap-canvas" style="display:none;"></canvas>
             </div>
 
             <!-- Scout Notes Section -->
@@ -346,6 +351,9 @@ class SofaScoutApp {
                 <div id="saveStatus" style="font-size: 10px; color: var(--text-muted); text-align: right; margin-top: 4px; height: 14px;"></div>
             </div>
         `;
+
+      // Store player reference for heatmap methods
+      this.currentPlayer = player;
 
       // Load saved note
       const noteKey = `note_${player.id}`;
@@ -383,11 +391,70 @@ class SofaScoutApp {
         this.downloadHeatmapAsPNG(player);
       });
 
-      // Draw Heatmap
-      this.renderHeatmap('playerHeatmap');
+      // Load tournaments for dropdown
+      const tournamentsData = await chrome.runtime.sendMessage({ action: 'getPlayerTournaments', playerId: player.id });
+      const select = document.getElementById('tournamentSelect');
+
+      if (tournamentsData.tournaments && tournamentsData.tournaments.length > 0) {
+        // Add "All Tournaments" option
+        select.innerHTML = '<option value="all">Tüm Turnuvalar (Sezon)</option>';
+
+        tournamentsData.tournaments.forEach(t => {
+          const option = document.createElement('option');
+          option.value = JSON.stringify({ id: t.id, seasonId: t.seasonId });
+          option.textContent = `${t.name} - ${t.seasonName}`;
+          select.appendChild(option);
+        });
+
+        // Tournament change listener
+        select.addEventListener('change', async () => {
+          await this.loadTournamentHeatmap(player.id, select.value);
+        });
+
+        // Load initial heatmap (all tournaments)
+        await this.loadTournamentHeatmap(player.id, 'all');
+      } else {
+        select.innerHTML = '<option value="">Turnuva bulunamadı</option>';
+        document.getElementById('heatmapLoading').style.display = 'none';
+      }
 
     } catch (e) {
       content.innerHTML = `<div style="color:red">Veri alınamadı: ${e.message}</div>`;
+    }
+  }
+
+  async loadTournamentHeatmap(playerId, value) {
+    const loadingEl = document.getElementById('heatmapLoading');
+    const canvasEl = document.getElementById('playerHeatmap');
+
+    // Show loading
+    loadingEl.style.display = 'block';
+    canvasEl.style.display = 'none';
+
+    let heatmapData;
+
+    if (value === 'all') {
+      // Fetch combined season heatmap
+      heatmapData = await chrome.runtime.sendMessage({ action: 'getSeasonHeatmap', playerId });
+    } else {
+      // Fetch specific tournament heatmap
+      const { id, seasonId } = JSON.parse(value);
+      heatmapData = await chrome.runtime.sendMessage({
+        action: 'getTournamentHeatmap',
+        playerId,
+        tournamentId: id,
+        seasonId
+      });
+    }
+
+    // Hide loading, show canvas
+    loadingEl.style.display = 'none';
+    canvasEl.style.display = 'block';
+
+    if (heatmapData.success && heatmapData.heatmap && heatmapData.heatmap.length > 0) {
+      this.renderHeatmap('playerHeatmap', heatmapData.heatmap);
+    } else {
+      this.renderHeatmap('playerHeatmap', null);
     }
   }
 
@@ -404,8 +471,8 @@ class SofaScoutApp {
     const ctx = downloadCanvas.getContext('2d');
     ctx.scale(scale, scale);
 
-    // Draw dark background
-    ctx.fillStyle = '#1a2228';
+    // Draw pitch background (same as renderHeatmap)
+    ctx.fillStyle = '#1a472a';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     // Copy original heatmap
@@ -426,55 +493,91 @@ class SofaScoutApp {
     document.body.removeChild(link);
   }
 
-  renderHeatmap(canvasId) {
+  renderHeatmap(canvasId, heatmapData) {
     const canvas = document.getElementById(canvasId);
     if (!canvas) return;
 
-    // Resize canvas to match display size
-    canvas.width = canvas.offsetWidth;
-    canvas.height = canvas.offsetHeight;
+    // Set canvas size (pitch ratio approximately 105:68)
+    const containerWidth = canvas.offsetWidth;
+    canvas.width = containerWidth;
+    canvas.height = Math.round(containerWidth * 0.65); // Pitch ratio
 
     const ctx = canvas.getContext('2d');
     const width = canvas.width;
     const height = canvas.height;
 
-    // Generate dummy heatmap data for demo if no real match ID is available yet
-    // In real implementation, we pass the API response here
-    const points = [];
-    for (let i = 0; i < 100; i++) {
-      points.push({
-        x: Math.random() * width,
-        y: Math.random() * height,
-        value: Math.random()
-      });
+    // Draw pitch background
+    ctx.fillStyle = '#1a472a'; // Grass green
+    ctx.fillRect(0, 0, width, height);
+
+    // Draw pitch markings
+    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+    ctx.lineWidth = 1;
+
+    // Outer boundary
+    ctx.strokeRect(5, 5, width - 10, height - 10);
+
+    // Center line
+    ctx.beginPath();
+    ctx.moveTo(width / 2, 5);
+    ctx.lineTo(width / 2, height - 5);
+    ctx.stroke();
+
+    // Center circle
+    ctx.beginPath();
+    ctx.arc(width / 2, height / 2, height * 0.15, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Penalty areas
+    const penaltyWidth = width * 0.16;
+    const penaltyHeight = height * 0.4;
+    // Left penalty area
+    ctx.strokeRect(5, (height - penaltyHeight) / 2, penaltyWidth, penaltyHeight);
+    // Right penalty area
+    ctx.strokeRect(width - 5 - penaltyWidth, (height - penaltyHeight) / 2, penaltyWidth, penaltyHeight);
+
+    // 6-yard boxes
+    const sixYardWidth = penaltyWidth * 0.4;
+    const sixYardHeight = penaltyHeight * 0.5;
+    ctx.strokeRect(5, (height - sixYardHeight) / 2, sixYardWidth, sixYardHeight);
+    ctx.strokeRect(width - 5 - sixYardWidth, (height - sixYardHeight) / 2, sixYardWidth, sixYardHeight);
+
+    // If no heatmap data, just show empty pitch
+    if (!heatmapData || !Array.isArray(heatmapData) || heatmapData.length === 0) {
+      ctx.fillStyle = 'rgba(255,255,255,0.5)';
+      ctx.font = '12px Poppins, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('Veri yok', width / 2, height / 2);
+      return;
     }
 
-    // Simple Heatmap Drawing Logic
-    points.forEach(p => {
+    // Use "lighter" blend mode for additive blending (overlapping = brighter)
+    ctx.globalCompositeOperation = 'lighter';
+
+    // Draw heatmap points
+    // SofaScore coordinates: x = 0-100 (left to right), y = 0-100 (BOTTOM to TOP for attacking direction)
+    heatmapData.forEach(point => {
+      // Convert coordinates - Y is inverted (0 = bottom of pitch)
+      const x = (point.x / 100) * width;
+      const y = height - (point.y / 100) * height; // Invert Y axis
+
       ctx.beginPath();
-      const gradient = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, 25);
-      gradient.addColorStop(0, `rgba(255, 60, 0, ${p.value * 0.4})`); // Core color
-      gradient.addColorStop(1, 'rgba(255, 60, 0, 0)');
+      const radius = 20; // Larger radius for smoother look
+      const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
+
+      // SofaScore-style gradient: Yellow core -> Orange -> Red fade
+      gradient.addColorStop(0, 'rgba(255, 220, 0, 0.5)');   // Bright yellow center
+      gradient.addColorStop(0.3, 'rgba(255, 140, 0, 0.35)'); // Orange
+      gradient.addColorStop(0.6, 'rgba(255, 60, 0, 0.2)');  // Red-orange
+      gradient.addColorStop(1, 'rgba(200, 0, 0, 0)');       // Transparent red edge
 
       ctx.fillStyle = gradient;
-      ctx.arc(p.x, p.y, 25, 0, Math.PI * 2);
+      ctx.arc(x, y, radius, 0, Math.PI * 2);
       ctx.fill();
     });
 
-    // Add pitch lines (Basic representation)
-    ctx.strokeStyle = 'rgba(255,255,255,0.1)';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-
-    // Center line
-    ctx.moveTo(width / 2, 0);
-    ctx.lineTo(width / 2, height);
-
-    // Center circle
-    ctx.moveTo(width / 2 + 20, height / 2);
-    ctx.arc(width / 2, height / 2, 20, 0, Math.PI * 2);
-
-    ctx.stroke();
+    // Reset blend mode
+    ctx.globalCompositeOperation = 'source-over';
   }
 
   renderMatches() {

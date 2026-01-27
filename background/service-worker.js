@@ -183,6 +183,15 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         case 'syncFavorites':
             syncUserFavorites().then(sendResponse);
             return true;
+        case 'getSeasonHeatmap':
+            getSeasonHeatmap(request.playerId).then(sendResponse);
+            return true;
+        case 'getPlayerTournaments':
+            getPlayerTournaments(request.playerId).then(sendResponse);
+            return true;
+        case 'getTournamentHeatmap':
+            getTournamentHeatmap(request.playerId, request.tournamentId, request.seasonId).then(sendResponse);
+            return true;
     }
 });
 
@@ -257,7 +266,7 @@ async function getMatchDetails(matchId) {
     }
 }
 
-// Get player heatmap data
+// Get player heatmap data for a specific match
 async function getPlayerHeatmap(playerId, matchId) {
     try {
         const response = await fetch(
@@ -267,5 +276,135 @@ async function getPlayerHeatmap(playerId, matchId) {
     } catch (error) {
         console.error('Error fetching heatmap:', error);
         return null;
+    }
+}
+
+// Get player's COMBINED season heatmap (all tournaments merged)
+async function getSeasonHeatmap(playerId) {
+    try {
+        // First, get player's statistics to find all active tournaments/seasons
+        const statsResponse = await fetch(
+            `https://api.sofascore.com/api/v1/player/${playerId}/statistics/seasons`
+        );
+        const statsData = await statsResponse.json();
+
+        if (!statsData.uniqueTournamentSeasons || statsData.uniqueTournamentSeasons.length === 0) {
+            return { error: 'no_seasons' };
+        }
+
+        // Collect all heatmap points from all tournaments
+        let allPoints = [];
+        let tournamentNames = [];
+
+        // Fetch heatmaps from all tournaments (limit to first 5 for performance)
+        const tournaments = statsData.uniqueTournamentSeasons.slice(0, 5);
+
+        for (const tournament of tournaments) {
+            const tournamentId = tournament.uniqueTournament.id;
+            const seasonId = tournament.seasons[0].id;
+
+            try {
+                const heatmapResponse = await fetch(
+                    `https://api.sofascore.com/api/v1/player/${playerId}/unique-tournament/${tournamentId}/season/${seasonId}/heatmap/overall`
+                );
+
+                if (heatmapResponse.ok) {
+                    const heatmapData = await heatmapResponse.json();
+
+                    // Extract points
+                    let points = null;
+                    if (Array.isArray(heatmapData)) {
+                        points = heatmapData;
+                    } else if (heatmapData.heatmap && Array.isArray(heatmapData.heatmap)) {
+                        points = heatmapData.heatmap;
+                    } else if (heatmapData.heatmapPoints && Array.isArray(heatmapData.heatmapPoints)) {
+                        points = heatmapData.heatmapPoints;
+                    } else if (heatmapData.points && Array.isArray(heatmapData.points)) {
+                        points = heatmapData.points;
+                    }
+
+                    if (points && points.length > 0) {
+                        allPoints = allPoints.concat(points);
+                        tournamentNames.push(tournament.uniqueTournament.name);
+                    }
+                }
+            } catch (e) {
+                console.log(`Failed to fetch heatmap for ${tournament.uniqueTournament.name}:`, e);
+            }
+        }
+
+        console.log('Total merged heatmap points:', allPoints.length, 'from', tournamentNames.length, 'tournaments');
+
+        if (allPoints.length === 0) {
+            return { error: 'no_heatmap_data' };
+        }
+
+        return {
+            success: true,
+            heatmap: allPoints,
+            tournament: 'Sezon Toplamı', // Combined season
+            season: tournamentNames.join(', ') || 'Tüm Turnuvalar'
+        };
+    } catch (error) {
+        console.error('Error fetching season heatmap:', error);
+        return { error: 'network_error' };
+    }
+}
+
+// Get player's available tournaments for dropdown
+async function getPlayerTournaments(playerId) {
+    try {
+        const response = await fetch(
+            `https://api.sofascore.com/api/v1/player/${playerId}/statistics/seasons`
+        );
+        const data = await response.json();
+
+        if (!data.uniqueTournamentSeasons) {
+            return { tournaments: [] };
+        }
+
+        const tournaments = data.uniqueTournamentSeasons.map(t => ({
+            id: t.uniqueTournament.id,
+            name: t.uniqueTournament.name,
+            seasonId: t.seasons[0].id,
+            seasonName: t.seasons[0].name
+        }));
+
+        return { tournaments };
+    } catch (error) {
+        console.error('Error fetching tournaments:', error);
+        return { tournaments: [] };
+    }
+}
+
+// Get heatmap for a specific tournament
+async function getTournamentHeatmap(playerId, tournamentId, seasonId) {
+    try {
+        const response = await fetch(
+            `https://api.sofascore.com/api/v1/player/${playerId}/unique-tournament/${tournamentId}/season/${seasonId}/heatmap/overall`
+        );
+
+        if (!response.ok) {
+            return { error: 'not_found' };
+        }
+
+        const data = await response.json();
+
+        // Extract points
+        let points = null;
+        if (Array.isArray(data)) {
+            points = data;
+        } else if (data.heatmap && Array.isArray(data.heatmap)) {
+            points = data.heatmap;
+        } else if (data.heatmapPoints) {
+            points = data.heatmapPoints;
+        } else if (data.points) {
+            points = data.points;
+        }
+
+        return { success: true, heatmap: points };
+    } catch (error) {
+        console.error('Error fetching tournament heatmap:', error);
+        return { error: 'network_error' };
     }
 }
