@@ -192,8 +192,138 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         case 'getTournamentHeatmap':
             getTournamentHeatmap(request.playerId, request.tournamentId, request.seasonId).then(sendResponse);
             return true;
+        case 'importProfile':
+            importUserProfile(request.profileUrl).then(sendResponse);
+            return true;
     }
 });
+
+// Import user profile from URL
+async function importUserProfile(profileUrl) {
+    try {
+        // Extract user ID from URL
+        // Format: https://www.sofascore.com/user/profile/665484da4099191a25d8bc45
+        const urlMatch = profileUrl.match(/\/user\/profile\/([a-f0-9]+)/i);
+        if (!urlMatch) {
+            return { error: 'invalid_url', message: 'Geçersiz profil URL\'si' };
+        }
+
+        const userId = urlMatch[1];
+        console.log('Importing profile for user:', userId);
+
+        // Try multiple possible API endpoints
+        const endpoints = [
+            `https://api.sofascore.com/api/v1/user/${userId}/favourites`,
+            `https://api.sofascore.com/api/v1/user/${userId}/favorites`,
+            `https://api.sofascore.com/api/v1/user/${userId}`,
+            `https://api.sofascore.com/api/v1/user/profile/${userId}`,
+            `https://api.sofascore.com/api/v1/user/${userId}/favourite-players`,
+            `https://api.sofascore.com/api/v1/user/${userId}/favouriteTeams`
+        ];
+
+        let data = null;
+        let successEndpoint = null;
+
+        for (const endpoint of endpoints) {
+            try {
+                console.log('Trying endpoint:', endpoint);
+                const response = await fetch(endpoint);
+                console.log('Response status:', response.status);
+
+                if (response.ok) {
+                    const text = await response.text();
+                    console.log('Response text (first 500 chars):', text.substring(0, 500));
+
+                    try {
+                        data = JSON.parse(text);
+                        successEndpoint = endpoint;
+                        console.log('Success! Data keys:', Object.keys(data));
+                        break;
+                    } catch (e) {
+                        console.log('Failed to parse JSON');
+                    }
+                }
+            } catch (e) {
+                console.log('Endpoint failed:', e.message);
+            }
+        }
+
+        if (!data) {
+            return { error: 'fetch_failed', message: 'Hiçbir API endpoint\'i çalışmadı. Lütfen SofaScore\'a giriş yapın.' };
+        }
+
+        console.log('Using endpoint:', successEndpoint);
+        console.log('Full data:', JSON.stringify(data, null, 2).substring(0, 1000));
+
+        // Parse favorites
+        const result = {
+            players: [],
+            teams: [],
+            competitions: [],
+            userId: userId
+        };
+
+        // Extract players (athletes)
+        if (data.favouritePlayers) {
+            result.players = data.favouritePlayers.map(p => ({
+                id: p.id,
+                name: p.name,
+                shortName: p.shortName,
+                team: p.team?.name || 'Bilinmiyor',
+                teamId: p.team?.id,
+                position: p.position || 'Oyuncu',
+                photo: `https://api.sofascore.app/api/v1/player/${p.id}/image`
+            }));
+        }
+
+        // Extract teams
+        if (data.favouriteTeams) {
+            result.teams = data.favouriteTeams.map(t => ({
+                id: t.id,
+                name: t.name,
+                shortName: t.shortName,
+                logo: `https://api.sofascore.app/api/v1/team/${t.id}/image`
+            }));
+        }
+
+        // Extract competitions/tournaments
+        if (data.favouriteUniqueTournaments) {
+            result.competitions = data.favouriteUniqueTournaments.map(c => ({
+                id: c.id,
+                name: c.name,
+                logo: `https://api.sofascore.app/api/v1/unique-tournament/${c.id}/image`
+            }));
+        }
+
+        // Save to storage
+        const { players: existingPlayers = [] } = await chrome.storage.local.get(['players']);
+
+        // Merge new players with existing (avoid duplicates)
+        const existingIds = new Set(existingPlayers.map(p => p.id));
+        const newPlayers = result.players.filter(p => !existingIds.has(p.id));
+        const mergedPlayers = [...existingPlayers, ...newPlayers];
+
+        await chrome.storage.local.set({
+            players: mergedPlayers,
+            favoriteTeams: result.teams,
+            favoriteCompetitions: result.competitions,
+            profileUserId: userId
+        });
+
+        return {
+            success: true,
+            imported: {
+                players: result.players.length,
+                teams: result.teams.length,
+                competitions: result.competitions.length
+            },
+            data: result
+        };
+    } catch (error) {
+        console.error('Error importing profile:', error);
+        return { error: 'network_error', message: error.message };
+    }
+}
 
 // Sync user favorites from SofaScore
 async function syncUserFavorites() {

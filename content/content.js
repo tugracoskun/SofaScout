@@ -31,6 +31,197 @@
 
         // Add quick action buttons
         addQuickActions();
+
+        // Check if we're on a profile page and add import button
+        if (window.location.href.includes('/user/profile/')) {
+            addProfileImportButton();
+        }
+
+        // Re-check on URL change (SPA navigation)
+        let lastUrl = location.href;
+        new MutationObserver(() => {
+            if (location.href !== lastUrl) {
+                lastUrl = location.href;
+                if (location.href.includes('/user/profile/')) {
+                    setTimeout(addProfileImportButton, 1500);
+                }
+            }
+        }).observe(document, { subtree: true, childList: true });
+    }
+
+    function addProfileImportButton() {
+        // Don't add if already exists
+        if (document.querySelector('.scout-import-btn')) return;
+        if (document.querySelector('.scout-floating-import')) return;
+
+        console.log('SofaScout: Looking for Athletes section...');
+
+        // Wait for page to load
+        setTimeout(() => {
+            // Find "Athletes" text by walking through all elements
+            const walker = document.createTreeWalker(
+                document.body,
+                NodeFilter.SHOW_TEXT,
+                null,
+                false
+            );
+
+            let athletesNode = null;
+            while (walker.nextNode()) {
+                const text = walker.currentNode.textContent.trim().toLowerCase();
+                if (text === 'athletes' || text === 'oyuncular') {
+                    athletesNode = walker.currentNode.parentElement;
+                    console.log('SofaScout: Found Athletes element:', athletesNode);
+                    break;
+                }
+            }
+
+            if (athletesNode) {
+                // Create import button (just icon)
+                const importBtn = document.createElement('button');
+                importBtn.className = 'scout-import-btn';
+                importBtn.innerHTML = `
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="7 10 12 15 17 10"/>
+                        <line x1="12" y1="15" x2="12" y2="3"/>
+                    </svg>
+                `;
+                importBtn.title = 'SofaScout\'a Aktar';
+                importBtn.addEventListener('click', importFavoritesToScout);
+
+                // Insert button right after the Athletes text
+                athletesNode.style.display = 'inline-flex';
+                athletesNode.style.alignItems = 'center';
+                athletesNode.style.gap = '8px';
+                athletesNode.appendChild(importBtn);
+                console.log('SofaScout: Import button added');
+                return;
+            }
+
+            // Fallback: add floating button
+            console.log('SofaScout: Athletes not found, checking for player links...');
+            const playerLinks = document.querySelectorAll('a[href*="/player/"]');
+            console.log('SofaScout: Found', playerLinks.length, 'player links');
+            if (playerLinks.length > 0) {
+                addFloatingImportButton();
+            }
+        }, 2000);
+    }
+
+    function addFloatingImportButton() {
+        if (document.querySelector('.scout-floating-import')) return;
+
+        const btn = document.createElement('button');
+        btn.className = 'scout-floating-import';
+        btn.innerHTML = `
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            SofaScout'a Aktar
+        `;
+        btn.title = 'Bu sayfadaki oyuncuları SofaScout\'a aktar';
+        btn.addEventListener('click', importFavoritesToScout);
+        document.body.appendChild(btn);
+    }
+
+    async function importFavoritesToScout() {
+        const btn = document.querySelector('.scout-import-btn') || document.querySelector('.scout-floating-import');
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<span>Aktarılıyor...</span>';
+        }
+
+        // Find all player links on the page
+        const players = [];
+        document.querySelectorAll('a[href*="/player/"]').forEach(link => {
+            const href = link.getAttribute('href');
+            const match = href.match(/\/player\/([^/]+)\/(\d+)/);
+            if (match) {
+                const name = link.textContent?.trim() || match[1].replace(/-/g, ' ');
+                const id = parseInt(match[2]);
+                if (id && name.length > 1 && name.length < 50 && !players.find(p => p.id === id)) {
+                    players.push({
+                        id,
+                        name,
+                        team: 'Bilinmiyor',
+                        rating: '-'
+                    });
+                }
+            }
+        });
+
+        console.log('Found players to import:', players);
+
+        if (players.length === 0) {
+            showImportToast('Bu sayfada oyuncu bulunamadı!', 'error');
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = `
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="7 10 12 15 17 10"/>
+                        <line x1="12" y1="15" x2="12" y2="3"/>
+                    </svg>
+                    <span>SofaScout'a Aktar</span>
+                `;
+            }
+            return;
+        }
+
+        // Save to storage
+        try {
+            const { players: existing = [] } = await chrome.storage.local.get(['players']);
+            console.log('SofaScout: Existing players in storage:', existing.length);
+
+            const existingIds = new Set(existing.map(p => p.id));
+            const newPlayers = players.filter(p => !existingIds.has(p.id));
+            console.log('SofaScout: New players to add:', newPlayers.length, newPlayers);
+
+            const updatedPlayers = [...existing, ...newPlayers];
+            console.log('SofaScout: Total players after merge:', updatedPlayers.length);
+
+            await chrome.storage.local.set({ players: updatedPlayers });
+            console.log('SofaScout: Storage updated successfully');
+
+            // Verify save
+            const verify = await chrome.storage.local.get(['players']);
+            console.log('SofaScout: Verification - players in storage:', verify.players?.length);
+
+            showImportToast(`✓ ${newPlayers.length} yeni oyuncu eklendi! (Toplam: ${updatedPlayers.length})`, 'success');
+        } catch (e) {
+            console.error('SofaScout: Storage error:', e);
+            showImportToast('Hata: ' + e.message, 'error');
+        }
+
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = `
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="7 10 12 15 17 10"/>
+                    <line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+                <span>SofaScout'a Aktar</span>
+            `;
+        }
+    }
+
+    function showImportToast(message, type = 'info') {
+        const existing = document.querySelector('.scout-import-toast');
+        if (existing) existing.remove();
+
+        const toast = document.createElement('div');
+        toast.className = `scout-import-toast ${type}`;
+        toast.textContent = message;
+        document.body.appendChild(toast);
+
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
     }
 
     function injectStyles() {
@@ -275,18 +466,16 @@
     }
 
     function createFocusModeUI() {
-        // Unified Corner Panel (bottom-right)
+        // Corner Toggle Button (bottom-right) with tooltip
         const cornerPanel = document.createElement('div');
         cornerPanel.className = 'focus-mode-corner';
         cornerPanel.innerHTML = `
-            <div class="corner-status">
-                <span class="corner-label">Focus Mode</span>
-                <span class="corner-state">OFF</span>
-            </div>
-            <button class="corner-toggle" title="Toggle Focus Mode">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <circle cx="12" cy="12" r="3"></circle>
+            <span class="corner-tooltip">Focus Mode</span>
+            <button class="corner-toggle" title="Focus Mode">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                    <line x1="4" y1="6" x2="20" y2="6"></line>
+                    <line x1="6" y1="12" x2="18" y2="12"></line>
+                    <line x1="8" y1="18" x2="16" y2="18"></line>
                 </svg>
             </button>
         `;
@@ -326,8 +515,6 @@
         const cornerPanel = document.querySelector('.focus-mode-corner');
         if (cornerPanel) {
             cornerPanel.classList.add('active');
-            const stateEl = cornerPanel.querySelector('.corner-state');
-            if (stateEl) stateEl.textContent = 'ON';
         }
 
         if (isMatchPage) {
@@ -456,8 +643,6 @@
         const cornerPanel = document.querySelector('.focus-mode-corner');
         if (cornerPanel) {
             cornerPanel.classList.remove('active');
-            const stateEl = cornerPanel.querySelector('.corner-state');
-            if (stateEl) stateEl.textContent = 'OFF';
         }
 
         console.log('🎯 Focus Mode: DISABLED - Reloading page...');

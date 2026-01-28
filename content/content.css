@@ -1,5 +1,104 @@
 /* SofaScore Scout Pro - Content Script Styles */
 
+/* Import Button on Profile Page */
+.scout-import-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: linear-gradient(135deg, #00D4AA 0%, #00B894 100%);
+    color: #000;
+    border: none;
+    border-radius: 8px;
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-left: auto;
+}
+
+.scout-import-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0, 212, 170, 0.4);
+}
+
+.scout-import-btn:disabled {
+    opacity: 0.7;
+    cursor: wait;
+}
+
+.scout-import-btn svg {
+    width: 14px;
+    height: 14px;
+}
+
+/* Floating Import Button */
+.scout-floating-import {
+    position: fixed;
+    bottom: 80px;
+    right: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 18px;
+    background: linear-gradient(135deg, #00D4AA 0%, #00B894 100%);
+    color: #000;
+    border: none;
+    border-radius: 12px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    z-index: 9999;
+    box-shadow: 0 4px 20px rgba(0, 212, 170, 0.4);
+    transition: all 0.3s ease;
+}
+
+.scout-floating-import:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(0, 212, 170, 0.5);
+}
+
+.scout-floating-import:disabled {
+    opacity: 0.7;
+    cursor: wait;
+}
+
+.scout-floating-import svg {
+    width: 20px;
+    height: 20px;
+}
+
+/* Import Toast */
+.scout-import-toast {
+    position: fixed;
+    bottom: 140px;
+    right: 20px;
+    padding: 14px 20px;
+    background: rgba(23, 28, 31, 0.95);
+    backdrop-filter: blur(10px);
+    color: #fff;
+    border-radius: 12px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    z-index: 10000;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: opacity 0.3s ease;
+}
+
+.scout-import-toast.success {
+    border-color: rgba(0, 212, 170, 0.5);
+    color: #00D4AA;
+}
+
+.scout-import-toast.error {
+    border-color: rgba(239, 68, 68, 0.5);
+    color: #EF4444;
+}
+
 /* Tracked player indicator */
 .scout-pro-tracked {
     position: relative;
@@ -220,91 +319,71 @@
     /* Deprecated - now using corner panel */
 }
 
-/* ===== CORNER PANEL - Unified Focus Mode Control ===== */
+/* ===== CORNER PANEL - Focus Mode Button ===== */
 .focus-mode-corner {
     position: fixed;
     bottom: 20px;
     right: 20px;
-    display: flex;
-    align-items: center;
-    gap: 0;
+    z-index: 9998;
+}
+
+/* Tooltip */
+.focus-mode-corner .corner-tooltip {
+    position: absolute;
+    bottom: 100%;
+    right: 0;
+    margin-bottom: 8px;
+    padding: 8px 14px;
     background: var(--focus-bg);
     backdrop-filter: var(--focus-glass);
     -webkit-backdrop-filter: var(--focus-glass);
     border: 1px solid var(--focus-border);
-    border-radius: 16px;
-    z-index: 9998;
-    box-shadow: var(--focus-shadow);
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    overflow: hidden;
-}
-
-.focus-mode-corner:hover {
-    border-color: rgba(0, 212, 170, 0.4);
-    box-shadow: 0 12px 40px rgba(0, 212, 170, 0.15);
-}
-
-/* Status Text Section */
-.focus-mode-corner .corner-status {
-    display: flex;
-    flex-direction: column;
-    padding: 8px 16px;
-    max-width: 0;
-    opacity: 0;
-    overflow: hidden;
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    white-space: nowrap;
-}
-
-.focus-mode-corner:hover .corner-status,
-.focus-mode-corner.active .corner-status {
-    max-width: 120px;
-    opacity: 1;
-}
-
-.focus-mode-corner .corner-label {
+    border-radius: 10px;
+    color: #fff;
     font-family: 'Inter', sans-serif;
-    font-size: 10px;
+    font-size: 12px;
     font-weight: 600;
-    color: rgba(255, 255, 255, 0.5);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    white-space: nowrap;
+    opacity: 0;
+    transform: translateY(10px);
+    pointer-events: none;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: var(--focus-shadow);
 }
 
-.focus-mode-corner .corner-state {
-    font-family: 'Inter', sans-serif;
-    font-size: 14px;
-    font-weight: 700;
-    color: rgba(255, 255, 255, 0.8);
-    transition: color 0.3s ease;
-}
-
-.focus-mode-corner.active .corner-state {
-    color: var(--focus-accent);
+.focus-mode-corner:hover .corner-tooltip {
+    opacity: 1;
+    transform: translateY(0);
 }
 
 /* Toggle Button */
 .focus-mode-corner .corner-toggle {
     width: 52px;
     height: 52px;
-    background: transparent;
-    border: none;
-    border-left: 1px solid var(--focus-border);
+    background: var(--focus-bg);
+    backdrop-filter: var(--focus-glass);
+    -webkit-backdrop-filter: var(--focus-glass);
+    border: 1px solid var(--focus-border);
+    border-radius: 16px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     color: var(--focus-accent);
     transition: all 0.3s ease;
+    box-shadow: var(--focus-shadow);
 }
 
 .focus-mode-corner .corner-toggle:hover {
-    background: rgba(0, 212, 170, 0.1);
+    border-color: var(--focus-accent);
+    transform: scale(1.05);
+    box-shadow: 0 12px 40px rgba(0, 212, 170, 0.2);
 }
 
 .focus-mode-corner.active .corner-toggle {
     background: var(--focus-accent);
     color: #171C1F;
+    border-color: var(--focus-accent);
 }
 
 .focus-mode-corner .corner-toggle svg {
@@ -312,7 +391,7 @@
     height: 22px;
 }
 
-/* Focus Mode Banner - DEPRECATED, now using corner panel */
+/* Focus Mode Banner - DEPRECATED */
 .focus-mode-banner {
     display: none !important;
 }

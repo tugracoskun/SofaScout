@@ -41,17 +41,20 @@ class SofaScoutApp {
   async syncData() {
     // Show loading state if needed
     try {
+      // First get existing players from storage (including manually imported ones)
+      const local = await chrome.storage.local.get(['players']);
+      const existingPlayers = local.players || [];
+
       const response = await chrome.runtime.sendMessage({ action: 'syncFavorites' });
 
       if (response.error === 'auth_required') {
         this.state.authRequired = true;
-        this.state.players = [];
+        // Keep existing players even if auth fails
+        this.state.players = existingPlayers;
       } else if (response.success && response.data) {
         this.state.authRequired = false;
         // Process favorites - filtering for players
-        // Note: Actual API structure needs to be inspected. 
-        // Assuming response.data.favorites contains mixed entities
-        this.state.players = (response.data.favoriteSportsPersons || response.data.favorites || [])
+        const apiPlayers = (response.data.favoriteSportsPersons || response.data.favorites || [])
           .filter(f => f.type === 'player' || f.entity?.type === 'player')
           .map(f => {
             const p = f.entity || f;
@@ -59,11 +62,19 @@ class SofaScoutApp {
               id: p.id,
               name: p.name,
               team: p.team?.name || 'Unknown',
-              rating: p.rating || '-' // Rating might need separate fetch
+              rating: p.rating || '-'
             };
           });
 
+        // Merge API players with existing (avoid duplicates)
+        const existingIds = new Set(existingPlayers.map(p => p.id));
+        const newFromApi = apiPlayers.filter(p => !existingIds.has(p.id));
+        this.state.players = [...existingPlayers, ...newFromApi];
+
         await chrome.storage.local.set({ players: this.state.players });
+      } else {
+        // No API data, use existing
+        this.state.players = existingPlayers;
       }
     } catch (e) {
       console.error('Sync failed', e);
@@ -228,8 +239,137 @@ class SofaScoutApp {
           <span class="stat-label">Uyarı</span>
         </div>
       </div>
+
+      <div class="import-section">
+        <div class="import-header">
+          <span class="import-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+          </span>
+          <span class="import-title">Favorileri İçe Aktar</span>
+        </div>
+        <p class="import-desc">SofaScore profil sayfanıza gidin ve "Mevcut Sayfadan Al" butonuna tıklayın.</p>
+        <div class="import-input-group">
+          <button id="importFromCurrentBtn" class="import-btn" style="flex:1;">📍 Mevcut Sayfadan Al</button>
+        </div>
+        <div id="importStatus" class="import-status"></div>
+      </div>
     `;
-    // Activity section can be populated dynamically later
+
+    // Bind import events
+    this.bindImportEvents();
+  }
+
+  bindImportEvents() {
+    const importBtn = document.getElementById('importFromCurrentBtn');
+    const statusEl = document.getElementById('importStatus');
+
+    importBtn?.addEventListener('click', async () => {
+      // Show loading
+      importBtn.disabled = true;
+      importBtn.textContent = 'Alınıyor...';
+      statusEl.innerHTML = '<span class="loading">Mevcut sayfadan favoriler alınıyor...</span>';
+
+      try {
+        // Get current active tab
+        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+
+        if (!tab || !tab.url?.includes('sofascore.com')) {
+          statusEl.innerHTML = '<span class="error">Lütfen önce SofaScore profil sayfanızı açın!</span>';
+          importBtn.disabled = false;
+          importBtn.textContent = '📍 Mevcut Sayfadan Al';
+          return;
+        }
+
+        // Scrape favorites from the current page
+        const results = await chrome.scripting.executeScript({
+          target: { tabId: tab.id },
+          func: () => {
+            const favorites = {
+              players: [],
+              teams: [],
+              competitions: []
+            };
+
+            // Look for athlete/player cards
+            document.querySelectorAll('a[href*="/player/"]').forEach(link => {
+              const href = link.getAttribute('href');
+              const match = href.match(/\/player\/([^/]+)\/(\d+)/);
+              if (match) {
+                const name = link.textContent?.trim() || match[1].replace(/-/g, ' ');
+                const id = parseInt(match[2]);
+                if (id && name.length > 0 && name.length < 50 && !favorites.players.find(p => p.id === id)) {
+                  favorites.players.push({ id, name, team: 'Bilinmiyor', rating: '-' });
+                }
+              }
+            });
+
+            // Look for team cards  
+            document.querySelectorAll('a[href*="/team/"]').forEach(link => {
+              const href = link.getAttribute('href');
+              const match = href.match(/\/team\/([^/]+)\/(\d+)/);
+              if (match) {
+                const name = link.textContent?.trim() || match[1].replace(/-/g, ' ');
+                const id = parseInt(match[2]);
+                if (id && name.length > 0 && name.length < 50 && !favorites.teams.find(t => t.id === id)) {
+                  favorites.teams.push({ id, name });
+                }
+              }
+            });
+
+            // Look for tournament/competition cards
+            document.querySelectorAll('a[href*="/tournament/"]').forEach(link => {
+              const href = link.getAttribute('href');
+              const match = href.match(/\/tournament\/([^/]+)\/(\d+)/);
+              if (match) {
+                const name = link.textContent?.trim() || match[1].replace(/-/g, ' ');
+                const id = parseInt(match[2]);
+                if (id && name.length > 0 && name.length < 50 && !favorites.competitions.find(c => c.id === id)) {
+                  favorites.competitions.push({ id, name });
+                }
+              }
+            });
+
+            return favorites;
+          }
+        });
+
+        const data = results[0]?.result;
+        console.log('Scraped from current page:', data);
+
+        if (!data) {
+          statusEl.innerHTML = '<span class="error">Veri alınamadı</span>';
+        } else if (data.players.length === 0 && data.teams.length === 0 && data.competitions.length === 0) {
+          statusEl.innerHTML = '<span class="error">Bu sayfada favori bulunamadı. Profil sayfanıza gidin.</span>';
+        } else {
+          // Save to storage
+          const { players: existing = [] } = await chrome.storage.local.get(['players']);
+          const existingIds = new Set(existing.map(p => p.id));
+          const newPlayers = data.players.filter(p => !existingIds.has(p.id));
+
+          await chrome.storage.local.set({
+            players: [...existing, ...newPlayers],
+            favoriteTeams: data.teams,
+            favoriteCompetitions: data.competitions
+          });
+
+          statusEl.innerHTML = `<span class="success">✓ ${data.players.length} oyuncu, ${data.teams.length} takım, ${data.competitions.length} lig içe aktarıldı!</span>`;
+
+          // Refresh
+          await this.syncData();
+          this.renderTabs();
+        }
+      } catch (error) {
+        console.error('Import error:', error);
+        statusEl.innerHTML = `<span class="error">Hata: ${error.message}</span>`;
+      }
+
+      importBtn.disabled = false;
+      importBtn.textContent = '📍 Mevcut Sayfadan Al';
+    });
   }
 
   renderPlayers() {

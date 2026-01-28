@@ -19,7 +19,8 @@
         "storage",
         "notifications",
         "alarms",
-        "tabs"
+        "tabs",
+        "scripting"
     ],
     "host_permissions": [
         "https://api.sofascore.com/*",
