@@ -215,7 +215,7 @@
     // =========================================
     // SCOUT MODE - Professional Interface
     // =========================================
-    
+
     let scoutModeEnabled = false;
 
     function initScoutMode() {
@@ -270,7 +270,7 @@
 
     function toggleScoutMode() {
         scoutModeEnabled = !scoutModeEnabled;
-        
+
         if (scoutModeEnabled) {
             enableScoutMode();
         } else {
@@ -281,10 +281,10 @@
         chrome.storage.local.set({ scoutModeEnabled });
 
         // Notify popup
-        chrome.runtime.sendMessage({ 
-            action: 'scoutModeChanged', 
-            enabled: scoutModeEnabled 
-        }).catch(() => {});
+        chrome.runtime.sendMessage({
+            action: 'scoutModeChanged',
+            enabled: scoutModeEnabled
+        }).catch(() => { });
 
         // Show feedback toast
         showScoutModeToast(scoutModeEnabled ? 'Scout Modu Aktif' : 'Scout Modu Kapalı');
@@ -292,7 +292,7 @@
 
     function enableScoutMode() {
         document.body.classList.add('scout-mode');
-        
+
         const toggleBtn = document.querySelector('.scout-mode-toggle');
         if (toggleBtn) {
             toggleBtn.classList.add('active');
@@ -306,7 +306,7 @@
 
     function disableScoutMode() {
         document.body.classList.remove('scout-mode');
-        
+
         const toggleBtn = document.querySelector('.scout-mode-toggle');
         if (toggleBtn) {
             toggleBtn.classList.remove('active');
@@ -316,22 +316,34 @@
     }
 
     function cleanupDOM() {
-        // Aggressive cleanup of known ad/betting elements
+        // === METHOD 1: Class-based selectors ===
         const selectorsToRemove = [
-            // Common ad patterns
+            // Ads
             '[class*="GoogleAd"]',
             '[class*="AdSlot"]',
-            '[class*="adUnit"]',
+            '[class*="AdContainer"]',
             '[id*="div-gpt-ad"]',
-            // Betting elements
-            '[class*="OddsCompare"]',
-            '[class*="BettingOdds"]',
-            '[class*="odds-"]',
-            // Social/noise
-            '[class*="SocialProof"]',
+
+            // Featured Odds Section
+            '[class*="FeaturedOdds"]',
+            '[class*="featuredOdds"]',
+            '[class*="OddsWidget"]',
+            '[class*="OddsSection"]',
+            '[class*="OddsPanel"]',
+            '[class*="oddsPanel"]',
+            '[class*="BettingWidget"]',
+
+            // Odds Toggle
+            '[class*="OddsToggle"]',
+            '[class*="oddsToggle"]',
+            '[class*="OddsSwitch"]',
+
+            // Vote/Poll widgets
             '[class*="FanVote"]',
+            '[class*="MatchVote"]',
             '[class*="WhoWillWin"]',
-            '[class*="Prediction"]',
+            '[class*="PredictWinner"]',
+
             // Promotions
             '[class*="PromoCard"]',
             '[class*="PromoBanner"]'
@@ -342,19 +354,64 @@
                 document.querySelectorAll(selector).forEach(el => {
                     el.style.display = 'none';
                 });
-            } catch (e) {
-                // Ignore invalid selectors
+            } catch (e) { }
+        });
+
+        // === METHOD 2: Text-based finding (CAREFUL - only small elements) ===
+
+        // Find "Featured odds" heading and hide its container
+        // Look for the specific heading text, not large containers
+        document.querySelectorAll('h1, h2, h3, h4, h5, h6, span, div').forEach(el => {
+            const text = (el.textContent || '').trim();
+
+            // Only match if this element directly contains "Featured odds" as primary text
+            // and is relatively small (not a huge container)
+            if (text === 'Featured odds' || text === 'Featured Odds') {
+                // Found the heading - now find its parent widget container
+                let widget = el.parentElement;
+                // Go up max 3 levels to find the widget container
+                for (let i = 0; i < 3 && widget; i++) {
+                    // Check if this looks like a widget (has match rows/odds data)
+                    const hasOddsData = widget.querySelectorAll('[class*="odd" i], [class*="Odd"]').length > 0;
+                    const hasMatches = widget.querySelectorAll('a[href*="/match/"], a[href*="/football/"]').length > 0;
+
+                    if (hasOddsData || hasMatches) {
+                        widget.style.display = 'none';
+                        console.log('🎯 Scout Mode: Hidden Featured Odds widget');
+                        break;
+                    }
+                    widget = widget.parentElement;
+                }
             }
         });
 
-        // Remove betting-related links
+        // Find Odds toggle - be very specific
+        // Look for switch/toggle that has ONLY "Odds" text
+        document.querySelectorAll('label, button, [role="switch"]').forEach(el => {
+            const directText = el.childNodes[0]?.textContent?.trim() || '';
+            const fullText = (el.textContent || '').trim();
+
+            // Only hide if this is specifically an "Odds" toggle
+            // Not something that just contains the word "odds" in a larger context
+            if ((directText === 'Odds' || fullText === 'Odds') &&
+                (el.querySelector('input[type="checkbox"]') ||
+                    el.hasAttribute('role') ||
+                    el.className.toLowerCase().includes('switch') ||
+                    el.className.toLowerCase().includes('toggle'))) {
+                el.style.display = 'none';
+                console.log('🎯 Scout Mode: Hidden Odds toggle');
+            }
+        });
+
+        // === METHOD 3: Remove betting links ===
         document.querySelectorAll('a').forEach(link => {
             const href = link.href || '';
-            if (href.includes('bet365') || 
-                href.includes('1xbet') || 
+            if (href.includes('bet365') ||
+                href.includes('1xbet') ||
                 href.includes('betway') ||
                 href.includes('unibet') ||
-                href.includes('bwin')) {
+                href.includes('bwin') ||
+                href.includes('betfair')) {
                 link.style.display = 'none';
             }
         });

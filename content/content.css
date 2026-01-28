@@ -256,65 +256,100 @@
 /* ===== SCOUT MODE ACTIVE STYLES ===== */
 
 /* Hide Advertisements */
-body.scout-mode [class*="Ad"],
-body.scout-mode [class*="ad-"],
+body.scout-mode [class*="AdContainer"],
+body.scout-mode [class*="AdSlot"],
+body.scout-mode [class*="AdBanner"],
+body.scout-mode [class*="ad-wrapper"],
 body.scout-mode [class*="advertisement"],
-body.scout-mode [class*="Banner"],
-body.scout-mode [class*="banner"],
-body.scout-mode [class*="promo"],
-body.scout-mode [class*="Promo"],
-body.scout-mode [data-testid*="ad"],
+body.scout-mode [class*="PromoBanner"],
+body.scout-mode [class*="PromoCard"],
+body.scout-mode [data-testid*="ad-"],
 body.scout-mode [id*="google_ads"],
 body.scout-mode [id*="taboola"],
 body.scout-mode [id*="outbrain"],
 body.scout-mode iframe[src*="ads"],
 body.scout-mode iframe[src*="doubleclick"],
-body.scout-mode [class*="sponsor"],
-body.scout-mode [class*="Sponsor"] {
+body.scout-mode [class*="SponsorBanner"],
+body.scout-mode [class*="SponsoredContent"] {
     display: none !important;
-    visibility: hidden !important;
-    height: 0 !important;
-    overflow: hidden !important;
 }
 
-/* Hide Betting / Odds Elements */
-body.scout-mode [class*="odds"],
-body.scout-mode [class*="Odds"],
-body.scout-mode [class*="betting"],
-body.scout-mode [class*="Betting"],
-body.scout-mode [class*="bet"],
-body.scout-mode [class*="Bet"],
-body.scout-mode [class*="Bookmaker"],
-body.scout-mode [class*="bookmaker"],
-body.scout-mode [data-testid*="odds"],
-body.scout-mode [data-testid*="bet"],
+/* ===== BETTING / ODDS - AGGRESSIVE BUT TARGETED ===== */
+
+/* Featured Odds Section - Multiple approaches */
+body.scout-mode [class*="FeaturedOdds"],
+body.scout-mode [class*="featuredOdds"],
+body.scout-mode [class*="featured-odds"],
+body.scout-mode [class*="OddsWidget"],
+body.scout-mode [class*="OddsSection"],
+body.scout-mode [class*="OddsContainer"],
+body.scout-mode [class*="OddsPanel"],
+body.scout-mode [class*="oddsPanel"],
+body.scout-mode [class*="odds-panel"],
+body.scout-mode [class*="BettingWidget"],
+body.scout-mode [class*="bettingWidget"],
+body.scout-mode [data-testid*="featured-odds"],
+body.scout-mode [data-testid*="odds-widget"],
+body.scout-mode aside[class*="odds" i],
+body.scout-mode section[class*="odds" i] {
+    display: none !important;
+}
+
+/* Odds Toggle/Switch in navigation */
+body.scout-mode [class*="OddsToggle"],
+body.scout-mode [class*="oddsToggle"],
+body.scout-mode [class*="odds-toggle"],
+body.scout-mode [class*="OddsSwitch"],
+body.scout-mode [class*="oddsSwitch"],
+body.scout-mode [class*="odds-switch"],
+body.scout-mode label[class*="odds" i]:has(input[type="checkbox"]),
+body.scout-mode div[class*="odds" i]:has(input[type="checkbox"]),
+body.scout-mode [data-testid*="odds-toggle"],
+body.scout-mode [data-testid*="oddsToggle"] {
+    display: none !important;
+}
+
+/* Betting Links */
 body.scout-mode a[href*="bet365"],
 body.scout-mode a[href*="1xbet"],
 body.scout-mode a[href*="betway"],
 body.scout-mode a[href*="unibet"],
-body.scout-mode a[href*="william"],
-body.scout-mode a[href*="paddy"],
-body.scout-mode a[href*="stake"],
-body.scout-mode [class*="OddsCell"],
-body.scout-mode [class*="oddValue"] {
+body.scout-mode a[href*="williamhill"],
+body.scout-mode a[href*="paddypower"],
+body.scout-mode a[href*="stake.com"],
+body.scout-mode a[href*="bwin"],
+body.scout-mode a[href*="betfair"],
+body.scout-mode [class*="BookmakerLogo"],
+body.scout-mode [class*="BettingPartner"] {
     display: none !important;
-    visibility: hidden !important;
+}
+
+/* Odds Values in Match Lists */
+body.scout-mode [class*="OddsCell"],
+body.scout-mode [class*="OddsValue"],
+body.scout-mode [class*="oddValue"],
+body.scout-mode [class*="MatchOdds"],
+body.scout-mode [class*="matchOdds"],
+body.scout-mode td[class*="odds" i],
+body.scout-mode [data-testid*="odds-cell"] {
+    display: none !important;
 }
 
 /* Hide Vote/Poll Widgets */
-body.scout-mode [class*="vote"],
-body.scout-mode [class*="Vote"],
-body.scout-mode [class*="poll"],
-body.scout-mode [class*="Poll"],
-body.scout-mode [class*="predict"],
-body.scout-mode [class*="Predict"] {
+body.scout-mode [class*="FanVote"],
+body.scout-mode [class*="MatchVote"],
+body.scout-mode [class*="PredictWinner"],
+body.scout-mode [class*="VoteWidget"],
+body.scout-mode [class*="PollWidget"],
+body.scout-mode [class*="fanVote"],
+body.scout-mode [class*="matchVote"] {
     display: none !important;
 }
 
 /* Hide Social Noise */
 body.scout-mode [class*="Comments"],
-body.scout-mode [class*="comments"],
-body.scout-mode [class*="SocialShare"] {
+body.scout-mode [class*="SocialShare"],
+body.scout-mode [class*="ShareButtons"] {
     display: none !important;
 }
 
@@ -363,8 +398,15 @@ body.scout-mode .scout-mode-banner {
 }
 
 @keyframes scoutBannerGlow {
-    0%, 100% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
+
+    0%,
+    100% {
+        background-position: 0% 50%;
+    }
+
+    50% {
+        background-position: 100% 50%;
+    }
 }
 
 /* Push content down when banner is visible */
