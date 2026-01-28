@@ -301,7 +301,119 @@
         // Additional DOM cleanup for stubborn elements
         cleanupDOM();
 
+        // Hide Odds toggle specifically
+        hideOddsToggle();
+
+        // Keep trying to hide Odds toggle for dynamically loaded content
+        const oddsInterval = setInterval(() => {
+            if (document.body.classList.contains('scout-mode')) {
+                hideOddsToggle();
+            } else {
+                clearInterval(oddsInterval);
+            }
+        }, 1000);
+
         console.log('🎯 Scout Mode: ENABLED');
+    }
+
+    function hideOddsToggle() {
+        // Use TreeWalker to find exact "Odds" text nodes
+        const walker = document.createTreeWalker(
+            document.body,
+            NodeFilter.SHOW_TEXT,
+            {
+                acceptNode: function (node) {
+                    if (node.textContent.trim() === 'Odds') {
+                        return NodeFilter.FILTER_ACCEPT;
+                    }
+                    return NodeFilter.FILTER_REJECT;
+                }
+            }
+        );
+
+        let textNode;
+        while (textNode = walker.nextNode()) {
+            // Found "Odds" text - now find its container
+            let element = textNode.parentElement;
+
+            // Check if this is near a toggle/switch
+            if (element) {
+                // Walk up max 3 levels to find container with toggle
+                for (let i = 0; i < 4 && element; i++) {
+                    const hasSwitch = element.querySelector('input[role="switch"], [class*="slider"], [class*="switch"]');
+                    const parentHasSwitch = element.parentElement?.querySelector('input[role="switch"], [class*="slider"], [class*="switch"]');
+
+                    if (hasSwitch || parentHasSwitch) {
+                        // Found the toggle container - hide the Odds label and switch
+                        const parent = element.parentElement;
+                        if (parent) {
+                            // Hide all children that are part of the toggle
+                            Array.from(parent.children).forEach(child => {
+                                const childText = child.textContent?.trim();
+                                const childClass = (child.className || '').toLowerCase();
+
+                                // Hide if it's the Odds label or a toggle/switch element
+                                if (childText === 'Odds' ||
+                                    childClass.includes('toggle') ||
+                                    childClass.includes('slider') ||
+                                    childClass.includes('switch') ||
+                                    child.querySelector('input[role="switch"]')) {
+                                    child.style.display = 'none';
+                                    console.log('🎯 Scout Mode: Hidden Odds element:', child.className || child.tagName);
+                                }
+                            });
+                        }
+                        break;
+                    }
+                    element = element.parentElement;
+                }
+            }
+        }
+    }
+
+    function hideAppPromo() {
+        // Hide "EXCLUSIVELY IN THE SOFASCORE APP" promo section
+        const promoTexts = [
+            'EXCLUSIVELY IN THE SOFASCORE APP',
+            'Stay informed with Sofascore',
+            'Never miss a big transfer',
+            'Get alerts for your favourite'
+        ];
+
+        // Use TreeWalker to find promo text
+        const walker = document.createTreeWalker(
+            document.body,
+            NodeFilter.SHOW_TEXT,
+            {
+                acceptNode: function (node) {
+                    const text = node.textContent.trim();
+                    if (promoTexts.some(promo => text.includes(promo))) {
+                        return NodeFilter.FILTER_ACCEPT;
+                    }
+                    return NodeFilter.FILTER_REJECT;
+                }
+            }
+        );
+
+        let textNode;
+        while (textNode = walker.nextNode()) {
+            // Walk up to find the promo container
+            let element = textNode.parentElement;
+            for (let i = 0; i < 8 && element; i++) {
+                // Check if this is a substantial container (not just a small text wrapper)
+                const rect = element.getBoundingClientRect();
+                if (rect.width > 200 && rect.height > 100) {
+                    // Check if it looks like a promo box (has images/QR codes)
+                    const hasImage = element.querySelector('img, svg, [class*="qr" i]');
+                    if (hasImage || element.textContent.includes('EXCLUSIVELY')) {
+                        element.style.display = 'none';
+                        console.log('🎯 Scout Mode: Hidden App Promo');
+                        return; // Only hide once
+                    }
+                }
+                element = element.parentElement;
+            }
+        }
     }
 
     function disableScoutMode() {
@@ -312,7 +424,12 @@
             toggleBtn.classList.remove('active');
         }
 
-        console.log('🎯 Scout Mode: DISABLED');
+        console.log('🎯 Scout Mode: DISABLED - Reloading page...');
+
+        // Reload page to fully revert changes
+        setTimeout(() => {
+            window.location.reload();
+        }, 300);
     }
 
     function cleanupDOM() {
@@ -385,21 +502,61 @@
             }
         });
 
-        // Find Odds toggle - be very specific
-        // Look for switch/toggle that has ONLY "Odds" text
-        document.querySelectorAll('label, button, [role="switch"]').forEach(el => {
-            const directText = el.childNodes[0]?.textContent?.trim() || '';
-            const fullText = (el.textContent || '').trim();
+        // Find Odds toggle - PRECISE targeting using SofaScore's actual class names
+        // Class names from DevTools: toggle_label, toggle_slider, toggle_input_root
 
-            // Only hide if this is specifically an "Odds" toggle
-            // Not something that just contains the word "odds" in a larger context
-            if ((directText === 'Odds' || fullText === 'Odds') &&
-                (el.querySelector('input[type="checkbox"]') ||
-                    el.hasAttribute('role') ||
-                    el.className.toLowerCase().includes('switch') ||
-                    el.className.toLowerCase().includes('toggle'))) {
+        // Method A: Find label with class containing "toggle" and text "Odds"
+        document.querySelectorAll('[class*="toggle"], label, span').forEach(el => {
+            const text = (el.textContent || '').trim();
+            const className = (el.className || '').toLowerCase();
+
+            // Only target elements that are specifically the Odds label
+            if (text === 'Odds' && (className.includes('label') || className.includes('toggle') || el.tagName === 'LABEL')) {
                 el.style.display = 'none';
-                console.log('🎯 Scout Mode: Hidden Odds toggle');
+                console.log('🎯 Scout Mode: Hidden Odds label');
+
+                // Find sibling toggle switch elements and hide them
+                const parent = el.parentElement;
+                if (parent) {
+                    // Hide toggle slider/switch siblings
+                    Array.from(parent.children).forEach(sibling => {
+                        const siblingClass = (sibling.className || '').toLowerCase();
+                        if (sibling !== el && (
+                            siblingClass.includes('slider') ||
+                            siblingClass.includes('switch') ||
+                            siblingClass.includes('input') ||
+                            sibling.querySelector('input[role="switch"]') ||
+                            sibling.getAttribute('role') === 'switch'
+                        )) {
+                            sibling.style.display = 'none';
+                            console.log('🎯 Scout Mode: Hidden Odds toggle slider');
+                        }
+                    });
+                }
+            }
+        });
+
+        // Method B: Find switch inputs and check if nearby text is "Odds"
+        document.querySelectorAll('input[role="switch"]').forEach(el => {
+            // Check immediate siblings for "Odds" text
+            const parent = el.parentElement;
+            if (parent) {
+                let hasOddsLabel = false;
+                Array.from(parent.children).forEach(sibling => {
+                    if (sibling.textContent?.trim() === 'Odds') {
+                        hasOddsLabel = true;
+                        sibling.style.display = 'none';
+                    }
+                });
+
+                if (hasOddsLabel) {
+                    el.style.display = 'none';
+                    // Also hide the slider element
+                    parent.querySelectorAll('[class*="slider"]').forEach(slider => {
+                        slider.style.display = 'none';
+                    });
+                    console.log('🎯 Scout Mode: Hidden Odds switch input');
+                }
             }
         });
 

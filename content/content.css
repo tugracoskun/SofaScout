@@ -295,7 +295,7 @@ body.scout-mode section[class*="odds" i] {
     display: none !important;
 }
 
-/* Odds Toggle/Switch in navigation */
+/* Odds Toggle/Switch in navigation - Multiple approaches */
 body.scout-mode [class*="OddsToggle"],
 body.scout-mode [class*="oddsToggle"],
 body.scout-mode [class*="odds-toggle"],
@@ -306,6 +306,33 @@ body.scout-mode label[class*="odds" i]:has(input[type="checkbox"]),
 body.scout-mode div[class*="odds" i]:has(input[type="checkbox"]),
 body.scout-mode [data-testid*="odds-toggle"],
 body.scout-mode [data-testid*="oddsToggle"] {
+    display: none !important;
+}
+
+/* SofaScore specific: toggle_label and toggle_slider classes */
+/* Hide the Odds toggle wrapper - target the container that holds both label and slider */
+body.scout-mode [class*="toggle_label"]:has(~ [class*="toggle_slider"]),
+body.scout-mode [class*="toggle_label"]+[class*="toggle_slider"],
+body.scout-mode [class*="toggle_label"]+[class*="toggle_input"],
+body.scout-mode [class*="toggleLabel"]:has(~ [class*="toggleSlider"]),
+body.scout-mode [class*="toggleLabel"]+[class*="toggleSlider"] {
+    display: none !important;
+}
+
+/* Hide toggle by checking parent wrapper */
+body.scout-mode div:has(> [class*="toggle_label"]):has(> [class*="toggle_slider"]),
+body.scout-mode div:has(> [class*="toggle_label"]):has(> [class*="toggle_input"]),
+body.scout-mode div:has(> span[class*="toggle"]):has(> input[role="switch"]) {
+    display: none !important;
+}
+
+/* Hide toggle containers in filter/nav bars */
+body.scout-mode [class*="Filter"] [class*="switch" i],
+body.scout-mode [class*="filter"] [class*="switch" i],
+body.scout-mode [class*="Filter"] [class*="toggle" i],
+body.scout-mode [class*="filter"] [class*="toggle" i],
+body.scout-mode [class*="TabBar"] [class*="switch" i],
+body.scout-mode [class*="tabBar"] [class*="switch" i] {
     display: none !important;
 }
 
