@@ -304,12 +304,16 @@
         // Hide Odds toggle specifically
         hideOddsToggle();
 
-        // Keep trying to hide Odds toggle for dynamically loaded content
-        const oddsInterval = setInterval(() => {
+        // Hide App promo sidebar
+        hideAppPromo();
+
+        // Keep trying to hide elements for dynamically loaded content
+        const cleanupInterval = setInterval(() => {
             if (document.body.classList.contains('scout-mode')) {
                 hideOddsToggle();
+                hideAppPromo();
             } else {
-                clearInterval(oddsInterval);
+                clearInterval(cleanupInterval);
             }
         }, 1000);
 
@@ -372,47 +376,35 @@
     }
 
     function hideAppPromo() {
-        // Hide "EXCLUSIVELY IN THE SOFASCORE APP" promo section
-        const promoTexts = [
-            'EXCLUSIVELY IN THE SOFASCORE APP',
-            'Stay informed with Sofascore',
-            'Never miss a big transfer',
-            'Get alerts for your favourite'
-        ];
+        try {
+            // Method 1: Hide card-component with ad-block-banners or QR codes
+            document.querySelectorAll('.card-component').forEach(card => {
+                const hasAdBanner = card.querySelector('img[src*="ad-block-banners"]');
+                const hasQR = card.querySelector('img[alt*="QR"], img[src*="qr-code"]');
+                const hasExclusively = card.textContent?.includes('Exclusively in the Sofascore');
 
-        // Use TreeWalker to find promo text
-        const walker = document.createTreeWalker(
-            document.body,
-            NodeFilter.SHOW_TEXT,
-            {
-                acceptNode: function (node) {
-                    const text = node.textContent.trim();
-                    if (promoTexts.some(promo => text.includes(promo))) {
-                        return NodeFilter.FILTER_ACCEPT;
-                    }
-                    return NodeFilter.FILTER_REJECT;
+                if (hasAdBanner || hasQR || hasExclusively) {
+                    card.style.display = 'none';
+                    console.log('🎯 Scout Mode: Hidden card-component promo');
                 }
-            }
-        );
+            });
 
-        let textNode;
-        while (textNode = walker.nextNode()) {
-            // Walk up to find the promo container
-            let element = textNode.parentElement;
-            for (let i = 0; i < 8 && element; i++) {
-                // Check if this is a substantial container (not just a small text wrapper)
-                const rect = element.getBoundingClientRect();
-                if (rect.width > 200 && rect.height > 100) {
-                    // Check if it looks like a promo box (has images/QR codes)
-                    const hasImage = element.querySelector('img, svg, [class*="qr" i]');
-                    if (hasImage || element.textContent.includes('EXCLUSIVELY')) {
-                        element.style.display = 'none';
-                        console.log('🎯 Scout Mode: Hidden App Promo');
-                        return; // Only hide once
-                    }
-                }
-                element = element.parentElement;
-            }
+            // Method 2: Hide by class patterns
+            const promoSelectors = [
+                '[class*="AppPromo"]',
+                '[class*="appPromo"]',
+                '[class*="DownloadApp"]',
+                '[class*="MobileApp"]',
+                '[class*="SidebarPromo"]'
+            ];
+
+            promoSelectors.forEach(selector => {
+                document.querySelectorAll(selector).forEach(el => {
+                    el.style.display = 'none';
+                });
+            });
+        } catch (e) {
+            console.log('🎯 Scout Mode: hideAppPromo error', e);
         }
     }
 

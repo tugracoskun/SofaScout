@@ -274,6 +274,35 @@ body.scout-mode [class*="SponsoredContent"] {
     display: none !important;
 }
 
+/* Hide SofaScore App Promo Sidebar */
+body.scout-mode [class*="AppPromo"],
+body.scout-mode [class*="appPromo"],
+body.scout-mode [class*="app-promo"],
+body.scout-mode [class*="DownloadApp"],
+body.scout-mode [class*="downloadApp"],
+body.scout-mode [class*="download-app"],
+body.scout-mode [class*="MobileApp"],
+body.scout-mode [class*="mobileApp"],
+body.scout-mode [class*="AppBanner"],
+body.scout-mode [class*="appBanner"],
+body.scout-mode [class*="GetApp"],
+body.scout-mode [class*="getApp"],
+body.scout-mode [class*="SidebarPromo"],
+body.scout-mode [class*="sidebarPromo"] {
+    display: none !important;
+}
+
+/* SofaScore specific: card-component with promo content */
+body.scout-mode .card-component:has(img[src*="ad-block-banners"]),
+body.scout-mode .card-component:has(img[alt*="QR"]),
+body.scout-mode .card-component:has(img[src*="qr-code"]),
+body.scout-mode .card-component:has(span[class*="tt_uppercase"]),
+body.scout-mode div:has(> img[src*="ad-block-banners"]),
+body.scout-mode div:has(img[src*="share-stats"]),
+body.scout-mode div[class*="card-component"]:has(img[alt="QR code"]) {
+    display: none !important;
+}
+
 /* ===== BETTING / ODDS - AGGRESSIVE BUT TARGETED ===== */
 
 /* Featured Odds Section - Multiple approaches */
