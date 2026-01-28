@@ -275,38 +275,25 @@
     }
 
     function createFocusModeUI() {
-        // Focus Mode Toggle Button (floating)
-        const toggleBtn = document.createElement('button');
-        toggleBtn.className = 'focus-mode-toggle';
-        toggleBtn.innerHTML = `
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="10"></circle>
-                <circle cx="12" cy="12" r="3"></circle>
-            </svg>
+        // Unified Corner Panel (bottom-right)
+        const cornerPanel = document.createElement('div');
+        cornerPanel.className = 'focus-mode-corner';
+        cornerPanel.innerHTML = `
+            <div class="corner-status">
+                <span class="corner-label">Focus Mode</span>
+                <span class="corner-state">OFF</span>
+            </div>
+            <button class="corner-toggle" title="Toggle Focus Mode">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+            </button>
         `;
-        toggleBtn.title = 'Focus Mode';
-        toggleBtn.addEventListener('click', toggleFocusMode);
-        document.body.appendChild(toggleBtn);
 
-        // Focus Mode Banner
-        const banner = document.createElement('div');
-        banner.className = 'focus-mode-banner';
-        banner.innerHTML = `
-            <span class="status-pill">Focus Mode Active</span>
-            <div class="info-item">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
-                Ads hidden
-            </div>
-            <div class="info-item">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
-                Distractions removed
-            </div>
-            <div class="info-item">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
-                Pure data view
-            </div>
-        `;
-        document.body.appendChild(banner);
+        const toggleBtn = cornerPanel.querySelector('.corner-toggle');
+        toggleBtn.addEventListener('click', toggleFocusMode);
+        document.body.appendChild(cornerPanel);
     }
 
     function toggleFocusMode() {
@@ -335,14 +322,16 @@
         // Check if we're on a match detail page FIRST
         const isMatchPage = window.location.href.includes('/match/');
 
-        const toggleBtn = document.querySelector('.focus-mode-toggle');
-        if (toggleBtn) {
-            toggleBtn.classList.add('active');
+        // Update corner panel
+        const cornerPanel = document.querySelector('.focus-mode-corner');
+        if (cornerPanel) {
+            cornerPanel.classList.add('active');
+            const stateEl = cornerPanel.querySelector('.corner-state');
+            if (stateEl) stateEl.textContent = 'ON';
         }
 
         if (isMatchPage) {
             // On match pages, DON'T add focus-mode class (CSS breaks the page)
-            // Just add minimal class for banner visibility
             document.body.classList.add('focus-mode-minimal');
             console.log('🎯 Focus Mode: ENABLED (Match page - no CSS hiding)');
             return; // Exit early
@@ -463,9 +452,12 @@
         document.body.classList.remove('focus-mode');
         document.body.classList.remove('focus-mode-minimal');
 
-        const toggleBtn = document.querySelector('.focus-mode-toggle');
-        if (toggleBtn) {
-            toggleBtn.classList.remove('active');
+        // Update corner panel
+        const cornerPanel = document.querySelector('.focus-mode-corner');
+        if (cornerPanel) {
+            cornerPanel.classList.remove('active');
+            const stateEl = cornerPanel.querySelector('.corner-state');
+            if (stateEl) stateEl.textContent = 'OFF';
         }
 
         console.log('🎯 Focus Mode: DISABLED - Reloading page...');

@@ -216,100 +216,111 @@
 
 /* Floating Focus Toggle */
 .focus-mode-toggle {
+    display: none;
+    /* Deprecated - now using corner panel */
+}
+
+/* ===== CORNER PANEL - Unified Focus Mode Control ===== */
+.focus-mode-corner {
     position: fixed;
-    bottom: 80px;
+    bottom: 20px;
     right: 20px;
-    width: 52px;
-    height: 52px;
+    display: flex;
+    align-items: center;
+    gap: 0;
     background: var(--focus-bg);
     backdrop-filter: var(--focus-glass);
     -webkit-backdrop-filter: var(--focus-glass);
     border: 1px solid var(--focus-border);
     border-radius: 16px;
+    z-index: 9998;
+    box-shadow: var(--focus-shadow);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    overflow: hidden;
+}
+
+.focus-mode-corner:hover {
+    border-color: rgba(0, 212, 170, 0.4);
+    box-shadow: 0 12px 40px rgba(0, 212, 170, 0.15);
+}
+
+/* Status Text Section */
+.focus-mode-corner .corner-status {
+    display: flex;
+    flex-direction: column;
+    padding: 8px 16px;
+    max-width: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    white-space: nowrap;
+}
+
+.focus-mode-corner:hover .corner-status,
+.focus-mode-corner.active .corner-status {
+    max-width: 120px;
+    opacity: 1;
+}
+
+.focus-mode-corner .corner-label {
+    font-family: 'Inter', sans-serif;
+    font-size: 10px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.5);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.focus-mode-corner .corner-state {
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.8);
+    transition: color 0.3s ease;
+}
+
+.focus-mode-corner.active .corner-state {
+    color: var(--focus-accent);
+}
+
+/* Toggle Button */
+.focus-mode-corner .corner-toggle {
+    width: 52px;
+    height: 52px;
+    background: transparent;
+    border: none;
+    border-left: 1px solid var(--focus-border);
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    z-index: 9998;
-    box-shadow: var(--focus-shadow);
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     color: var(--focus-accent);
+    transition: all 0.3s ease;
 }
 
-.focus-mode-toggle:hover {
-    transform: scale(1.1) translateY(-5px);
-    border-color: var(--focus-accent);
-    box-shadow: 0 12px 40px rgba(0, 212, 170, 0.25);
+.focus-mode-corner .corner-toggle:hover {
+    background: rgba(0, 212, 170, 0.1);
 }
 
-.focus-mode-toggle.active {
+.focus-mode-corner.active .corner-toggle {
     background: var(--focus-accent);
     color: #171C1F;
-    border-color: var(--focus-accent);
 }
 
-.focus-mode-toggle svg {
-    width: 24px;
-    height: 24px;
+.focus-mode-corner .corner-toggle svg {
+    width: 22px;
+    height: 22px;
 }
 
-/* Focus Mode Brand Banner */
+/* Focus Mode Banner - DEPRECATED, now using corner panel */
 .focus-mode-banner {
-    position: fixed;
-    top: -60px;
-    left: 0;
-    width: 100%;
-    height: 42px;
-    background: var(--focus-bg);
-    backdrop-filter: var(--focus-glass);
-    -webkit-backdrop-filter: var(--focus-glass);
-    border-bottom: 1px solid var(--focus-border);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 9999;
-    color: #fff;
-    font-family: 'Inter', sans-serif;
-    font-size: 13px;
-    font-weight: 500;
-    letter-spacing: 0.5px;
-    transition: all 0.6s cubic-bezier(0.19, 1, 0.22, 1);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-    gap: 24px;
-    /* Added gap */
+    display: none !important;
 }
 
-body.focus-mode .focus-mode-banner,
-body.focus-mode-minimal .focus-mode-banner {
-    top: 0;
-}
-
-.focus-mode-banner .status-pill {
-    background: var(--focus-accent);
-    color: #171C1F;
-    padding: 3px 12px;
-    border-radius: 20px;
-    font-weight: 800;
-    font-size: 10px;
-    text-transform: uppercase;
-    box-shadow: 0 2px 10px rgba(0, 212, 170, 0.3);
-}
-
-.focus-mode-banner .info-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    color: rgba(255, 255, 255, 0.6);
-    font-size: 12px;
-}
-
-.focus-mode-banner .info-item svg {
-    color: var(--focus-accent);
-}
-
+/* Toast notification */
 .focus-mode-toast {
     position: fixed;
-    top: 60px;
+    bottom: 90px;
     right: 24px;
     background: var(--focus-bg);
     backdrop-filter: var(--focus-glass);
