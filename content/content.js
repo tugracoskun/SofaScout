@@ -213,87 +213,96 @@
     }
 
     // =========================================
-    // SCOUT MODE - Professional Interface
+    // FOCUS MODE - Premium Scouting Interface
     // =========================================
 
-    let scoutModeEnabled = false;
+    let focusModeEnabled = false;
 
-    function initScoutMode() {
-        // Load saved state
-        chrome.storage.local.get(['scoutModeEnabled'], (result) => {
-            scoutModeEnabled = result.scoutModeEnabled || false;
-            if (scoutModeEnabled) {
-                enableScoutMode();
+    function initFocusMode() {
+        // Load saved state (backwards compatible with scoutModeEnabled)
+        chrome.storage.local.get(['focusModeEnabled', 'scoutModeEnabled'], (result) => {
+            focusModeEnabled = result.focusModeEnabled || result.scoutModeEnabled || false;
+            if (focusModeEnabled) {
+                enableFocusMode();
             }
         });
 
-        // Create Scout Mode UI elements
-        createScoutModeUI();
+        // Create Focus Mode UI elements
+        createFocusModeUI();
 
         // Listen for messages from popup
         chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-            if (request.action === 'toggleScoutMode') {
-                toggleScoutMode();
-                sendResponse({ enabled: scoutModeEnabled });
-            } else if (request.action === 'getScoutModeStatus') {
-                sendResponse({ enabled: scoutModeEnabled });
+            if (request.action === 'toggleScoutMode' || request.action === 'toggleFocusMode') {
+                toggleFocusMode();
+                sendResponse({ enabled: focusModeEnabled });
+            } else if (request.action === 'getScoutModeStatus' || request.action === 'getFocusModeStatus') {
+                sendResponse({ enabled: focusModeEnabled });
             }
             return true;
         });
     }
 
-    function createScoutModeUI() {
-        // Scout Mode Toggle Button (floating)
+    function createFocusModeUI() {
+        // Focus Mode Toggle Button (floating)
         const toggleBtn = document.createElement('button');
-        toggleBtn.className = 'scout-mode-toggle';
-        toggleBtn.innerHTML = '🎯';
-        toggleBtn.title = 'Scout Modu';
-        toggleBtn.addEventListener('click', toggleScoutMode);
+        toggleBtn.className = 'focus-mode-toggle';
+        toggleBtn.innerHTML = `
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+        `;
+        toggleBtn.title = 'Focus Mode';
+        toggleBtn.addEventListener('click', toggleFocusMode);
         document.body.appendChild(toggleBtn);
 
-        // Scout Mode Banner
+        // Focus Mode Banner
         const banner = document.createElement('div');
-        banner.className = 'scout-mode-banner';
+        banner.className = 'focus-mode-banner';
         banner.innerHTML = `
-            <span>🎯</span>
-            <span>SCOUT MODU AKTİF</span>
-            <span style="opacity: 0.7">• Reklamlar gizlendi • Bahis oranları kaldırıldı • Veri odaklı görünüm</span>
+            <span class="status-pill">Focus Mode Active</span>
+            <div class="info-item">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                Ads hidden
+            </div>
+            <div class="info-item">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                Distractions removed
+            </div>
+            <div class="info-item">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+                Pure data view
+            </div>
         `;
         document.body.appendChild(banner);
-
-        // Scout Mode Status Pill
-        const statusPill = document.createElement('div');
-        statusPill.className = 'scout-mode-status';
-        statusPill.innerHTML = '🎯 Scout Mode';
-        document.body.appendChild(statusPill);
     }
 
-    function toggleScoutMode() {
-        scoutModeEnabled = !scoutModeEnabled;
+    function toggleFocusMode() {
+        focusModeEnabled = !focusModeEnabled;
 
-        if (scoutModeEnabled) {
-            enableScoutMode();
+        if (focusModeEnabled) {
+            enableFocusMode();
         } else {
-            disableScoutMode();
+            disableFocusMode();
         }
 
         // Save state
-        chrome.storage.local.set({ scoutModeEnabled });
+        chrome.storage.local.set({ focusModeEnabled, scoutModeEnabled: focusModeEnabled });
 
         // Notify popup
         chrome.runtime.sendMessage({
-            action: 'scoutModeChanged',
-            enabled: scoutModeEnabled
+            action: 'focusModeChanged',
+            enabled: focusModeEnabled
         }).catch(() => { });
 
         // Show feedback toast
-        showScoutModeToast(scoutModeEnabled ? 'Scout Modu Aktif' : 'Scout Modu Kapalı');
+        showFocusModeToast(focusModeEnabled ? 'Focus Mode Enabled' : 'Focus Mode Disabled');
     }
 
-    function enableScoutMode() {
-        document.body.classList.add('scout-mode');
+    function enableFocusMode() {
+        document.body.classList.add('focus-mode');
 
-        const toggleBtn = document.querySelector('.scout-mode-toggle');
+        const toggleBtn = document.querySelector('.focus-mode-toggle');
         if (toggleBtn) {
             toggleBtn.classList.add('active');
         }
@@ -309,19 +318,19 @@
 
         // Keep trying to hide elements for dynamically loaded content
         const cleanupInterval = setInterval(() => {
-            if (document.body.classList.contains('scout-mode')) {
+            if (document.body.classList.contains('focus-mode')) {
                 hideOddsToggle();
                 hideAppPromo();
+                cleanupDOM();
             } else {
                 clearInterval(cleanupInterval);
             }
-        }, 1000);
+        }, 1500);
 
-        console.log('🎯 Scout Mode: ENABLED');
+        console.log('🎯 Focus Mode: ENABLED');
     }
 
     function hideOddsToggle() {
-        // Use TreeWalker to find exact "Odds" text nodes
         const walker = document.createTreeWalker(
             document.body,
             NodeFilter.SHOW_TEXT,
@@ -337,33 +346,25 @@
 
         let textNode;
         while (textNode = walker.nextNode()) {
-            // Found "Odds" text - now find its container
             let element = textNode.parentElement;
-
-            // Check if this is near a toggle/switch
             if (element) {
-                // Walk up max 3 levels to find container with toggle
                 for (let i = 0; i < 4 && element; i++) {
                     const hasSwitch = element.querySelector('input[role="switch"], [class*="slider"], [class*="switch"]');
                     const parentHasSwitch = element.parentElement?.querySelector('input[role="switch"], [class*="slider"], [class*="switch"]');
 
                     if (hasSwitch || parentHasSwitch) {
-                        // Found the toggle container - hide the Odds label and switch
                         const parent = element.parentElement;
                         if (parent) {
-                            // Hide all children that are part of the toggle
                             Array.from(parent.children).forEach(child => {
                                 const childText = child.textContent?.trim();
                                 const childClass = (child.className || '').toLowerCase();
 
-                                // Hide if it's the Odds label or a toggle/switch element
                                 if (childText === 'Odds' ||
                                     childClass.includes('toggle') ||
                                     childClass.includes('slider') ||
                                     childClass.includes('switch') ||
                                     child.querySelector('input[role="switch"]')) {
                                     child.style.display = 'none';
-                                    console.log('🎯 Scout Mode: Hidden Odds element:', child.className || child.tagName);
                                 }
                             });
                         }
@@ -377,7 +378,6 @@
 
     function hideAppPromo() {
         try {
-            // Method 1: Hide card-component with ad-block-banners or QR codes
             document.querySelectorAll('.card-component').forEach(card => {
                 const hasAdBanner = card.querySelector('img[src*="ad-block-banners"]');
                 const hasQR = card.querySelector('img[alt*="QR"], img[src*="qr-code"]');
@@ -385,11 +385,9 @@
 
                 if (hasAdBanner || hasQR || hasExclusively) {
                     card.style.display = 'none';
-                    console.log('🎯 Scout Mode: Hidden card-component promo');
                 }
             });
 
-            // Method 2: Hide by class patterns
             const promoSelectors = [
                 '[class*="AppPromo"]',
                 '[class*="appPromo"]',
@@ -403,59 +401,34 @@
                     el.style.display = 'none';
                 });
             });
-        } catch (e) {
-            console.log('🎯 Scout Mode: hideAppPromo error', e);
-        }
+        } catch (e) { }
     }
 
-    function disableScoutMode() {
-        document.body.classList.remove('scout-mode');
+    function disableFocusMode() {
+        document.body.classList.remove('focus-mode');
 
-        const toggleBtn = document.querySelector('.scout-mode-toggle');
+        const toggleBtn = document.querySelector('.focus-mode-toggle');
         if (toggleBtn) {
             toggleBtn.classList.remove('active');
         }
 
-        console.log('🎯 Scout Mode: DISABLED - Reloading page...');
-
-        // Reload page to fully revert changes
+        console.log('🎯 Focus Mode: DISABLED - Reloading page...');
         setTimeout(() => {
             window.location.reload();
         }, 300);
     }
 
     function cleanupDOM() {
-        // === METHOD 1: Class-based selectors ===
+        if (!focusModeEnabled) return;
+
         const selectorsToRemove = [
-            // Ads
-            '[class*="GoogleAd"]',
-            '[class*="AdSlot"]',
-            '[class*="AdContainer"]',
-            '[id*="div-gpt-ad"]',
-
-            // Featured Odds Section
-            '[class*="FeaturedOdds"]',
-            '[class*="featuredOdds"]',
-            '[class*="OddsWidget"]',
-            '[class*="OddsSection"]',
-            '[class*="OddsPanel"]',
-            '[class*="oddsPanel"]',
-            '[class*="BettingWidget"]',
-
-            // Odds Toggle
-            '[class*="OddsToggle"]',
-            '[class*="oddsToggle"]',
-            '[class*="OddsSwitch"]',
-
-            // Vote/Poll widgets
-            '[class*="FanVote"]',
-            '[class*="MatchVote"]',
-            '[class*="WhoWillWin"]',
-            '[class*="PredictWinner"]',
-
-            // Promotions
-            '[class*="PromoCard"]',
-            '[class*="PromoBanner"]'
+            '[class*="GoogleAd"]', '[class*="AdSlot"]', '[class*="AdContainer"]', '[id*="div-gpt-ad"]',
+            '[class*="FeaturedOdds"]', '[class*="featuredOdds"]', '[class*="OddsWidget"]', '[class*="OddsSection"]',
+            '[class*="OddsPanel"]', '[class*="oddsPanel"]', '[class*="BettingWidget"]',
+            '[class*="OddsToggle"]', '[class*="oddsToggle"]', '[class*="OddsSwitch"]',
+            '[class*="FanVote"]', '[class*="MatchVote"]', '[class*="WhoWillWin"]', '[class*="PredictWinner"]',
+            '[class*="PromoCard"]', '[class*="PromoBanner"]',
+            '[class*="Comments"]', '[class*="SocialShare"]', '[class*="ShareButtons"]'
         ];
 
         selectorsToRemove.forEach(selector => {
@@ -466,139 +439,50 @@
             } catch (e) { }
         });
 
-        // === METHOD 2: Text-based finding (CAREFUL - only small elements) ===
-
-        // Find "Featured odds" heading and hide its container
-        // Look for the specific heading text, not large containers
-        document.querySelectorAll('h1, h2, h3, h4, h5, h6, span, div').forEach(el => {
-            const text = (el.textContent || '').trim();
-
-            // Only match if this element directly contains "Featured odds" as primary text
-            // and is relatively small (not a huge container)
-            if (text === 'Featured odds' || text === 'Featured Odds') {
-                // Found the heading - now find its parent widget container
-                let widget = el.parentElement;
-                // Go up max 3 levels to find the widget container
-                for (let i = 0; i < 3 && widget; i++) {
-                    // Check if this looks like a widget (has match rows/odds data)
-                    const hasOddsData = widget.querySelectorAll('[class*="odd" i], [class*="Odd"]').length > 0;
-                    const hasMatches = widget.querySelectorAll('a[href*="/match/"], a[href*="/football/"]').length > 0;
-
-                    if (hasOddsData || hasMatches) {
-                        widget.style.display = 'none';
-                        console.log('🎯 Scout Mode: Hidden Featured Odds widget');
-                        break;
-                    }
-                    widget = widget.parentElement;
-                }
-            }
-        });
-
-        // Find Odds toggle - PRECISE targeting using SofaScore's actual class names
-        // Class names from DevTools: toggle_label, toggle_slider, toggle_input_root
-
-        // Method A: Find label with class containing "toggle" and text "Odds"
-        document.querySelectorAll('[class*="toggle"], label, span').forEach(el => {
-            const text = (el.textContent || '').trim();
-            const className = (el.className || '').toLowerCase();
-
-            // Only target elements that are specifically the Odds label
-            if (text === 'Odds' && (className.includes('label') || className.includes('toggle') || el.tagName === 'LABEL')) {
-                el.style.display = 'none';
-                console.log('🎯 Scout Mode: Hidden Odds label');
-
-                // Find sibling toggle switch elements and hide them
-                const parent = el.parentElement;
-                if (parent) {
-                    // Hide toggle slider/switch siblings
-                    Array.from(parent.children).forEach(sibling => {
-                        const siblingClass = (sibling.className || '').toLowerCase();
-                        if (sibling !== el && (
-                            siblingClass.includes('slider') ||
-                            siblingClass.includes('switch') ||
-                            siblingClass.includes('input') ||
-                            sibling.querySelector('input[role="switch"]') ||
-                            sibling.getAttribute('role') === 'switch'
-                        )) {
-                            sibling.style.display = 'none';
-                            console.log('🎯 Scout Mode: Hidden Odds toggle slider');
-                        }
-                    });
-                }
-            }
-        });
-
-        // Method B: Find switch inputs and check if nearby text is "Odds"
-        document.querySelectorAll('input[role="switch"]').forEach(el => {
-            // Check immediate siblings for "Odds" text
-            const parent = el.parentElement;
-            if (parent) {
-                let hasOddsLabel = false;
-                Array.from(parent.children).forEach(sibling => {
-                    if (sibling.textContent?.trim() === 'Odds') {
-                        hasOddsLabel = true;
-                        sibling.style.display = 'none';
-                    }
-                });
-
-                if (hasOddsLabel) {
-                    el.style.display = 'none';
-                    // Also hide the slider element
-                    parent.querySelectorAll('[class*="slider"]').forEach(slider => {
-                        slider.style.display = 'none';
-                    });
-                    console.log('🎯 Scout Mode: Hidden Odds switch input');
-                }
-            }
-        });
-
-        // === METHOD 3: Remove betting links ===
+        // Hide Odds link in match pages specifically
         document.querySelectorAll('a').forEach(link => {
             const href = link.href || '';
-            if (href.includes('bet365') ||
-                href.includes('1xbet') ||
-                href.includes('betway') ||
-                href.includes('unibet') ||
-                href.includes('bwin') ||
-                href.includes('betfair')) {
+            const text = link.textContent || '';
+            if (href.includes('bet365') || href.includes('1xbet') || href.includes('betway') ||
+                href.includes('unibet') || href.includes('bwin') || href.includes('betfair')) {
                 link.style.display = 'none';
             }
         });
     }
 
-    function showScoutModeToast(message) {
-        // Remove existing toast
-        const existingToast = document.querySelector('.scout-mode-toast');
+    function showFocusModeToast(message) {
+        const existingToast = document.querySelector('.focus-mode-toast');
         if (existingToast) existingToast.remove();
 
         const toast = document.createElement('div');
-        toast.className = 'scout-pro-toast scout-mode-toast success';
+        toast.className = 'focus-mode-toast';
         toast.innerHTML = `
-            <span style="margin-right: 8px;">🎯</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
             <span>${message}</span>
         `;
         document.body.appendChild(toast);
 
-        // Animate in
         requestAnimationFrame(() => {
             toast.classList.add('show');
         });
 
-        // Remove after delay
         setTimeout(() => {
             toast.classList.remove('show');
-            setTimeout(() => toast.remove(), 300);
-        }, 2500);
+            setTimeout(() => toast.remove(), 500);
+        }, 3000);
     }
 
-    // Initialize Scout Mode
-    initScoutMode();
+    // Initialize Focus Mode
+    initFocusMode();
 
-    // Re-run cleanup periodically for dynamically loaded content
+    // Periodic cleanup
     setInterval(() => {
-        if (scoutModeEnabled) {
+        if (focusModeEnabled) {
             cleanupDOM();
         }
-    }, 3000);
+    }, 2500);
 
 })();

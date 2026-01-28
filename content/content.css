@@ -203,209 +203,284 @@
 }
 
 /* ===========================================
-   SCOUT MODE - Professional Scouting Interface
+   FOCUS MODE - Premium Scouting Interface
    =========================================== */
 
-/* Scout Mode Toggle Button */
-.scout-mode-toggle {
+:root {
+    --focus-bg: rgba(23, 28, 31, 0.9);
+    --focus-accent: #00D4AA;
+    --focus-glass: blur(12px) saturate(180%);
+    --focus-border: rgba(255, 255, 255, 0.1);
+    --focus-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+}
+
+/* Floating Focus Toggle */
+.focus-mode-toggle {
     position: fixed;
     bottom: 80px;
     right: 20px;
-    width: 48px;
-    height: 48px;
-    background: linear-gradient(135deg, #171C1F 0%, #000000 100%);
-    border: 2px solid #00D4AA;
-    border-radius: 50%;
+    width: 52px;
+    height: 52px;
+    background: var(--focus-bg);
+    backdrop-filter: var(--focus-glass);
+    -webkit-backdrop-filter: var(--focus-glass);
+    border: 1px solid var(--focus-border);
+    border-radius: 16px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     z-index: 9998;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-    transition: all 0.3s ease;
-    font-size: 20px;
+    box-shadow: var(--focus-shadow);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    color: var(--focus-accent);
 }
 
-.scout-mode-toggle:hover {
-    transform: scale(1.1);
-    box-shadow: 0 6px 28px rgba(0, 212, 170, 0.3);
+.focus-mode-toggle:hover {
+    transform: scale(1.1) translateY(-5px);
+    border-color: var(--focus-accent);
+    box-shadow: 0 12px 40px rgba(0, 212, 170, 0.25);
 }
 
-.scout-mode-toggle.active {
-    background: linear-gradient(135deg, #00D4AA 0%, #00B894 100%);
-    border-color: #00D4AA;
+.focus-mode-toggle.active {
+    background: var(--focus-accent);
+    color: #171C1F;
+    border-color: var(--focus-accent);
 }
 
-.scout-mode-toggle.active::after {
-    content: '✓';
-    position: absolute;
-    top: -5px;
-    right: -5px;
-    width: 18px;
-    height: 18px;
-    background: #00D4AA;
-    border-radius: 50%;
-    font-size: 10px;
+.focus-mode-toggle svg {
+    width: 24px;
+    height: 24px;
+}
+
+/* Focus Mode Brand Banner */
+.focus-mode-banner {
+    position: fixed;
+    top: -60px;
+    left: 0;
+    width: 100%;
+    height: 42px;
+    background: var(--focus-bg);
+    backdrop-filter: var(--focus-glass);
+    -webkit-backdrop-filter: var(--focus-glass);
+    border-bottom: 1px solid var(--focus-border);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #000;
-    font-weight: bold;
+    z-index: 9999;
+    color: #fff;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    transition: all 0.6s cubic-bezier(0.19, 1, 0.22, 1);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    gap: 24px;
+    /* Added gap */
 }
 
-/* ===== SCOUT MODE ACTIVE STYLES ===== */
+body.focus-mode .focus-mode-banner {
+    top: 0;
+}
+
+.focus-mode-banner .status-pill {
+    background: var(--focus-accent);
+    color: #171C1F;
+    padding: 3px 12px;
+    border-radius: 20px;
+    font-weight: 800;
+    font-size: 10px;
+    text-transform: uppercase;
+    box-shadow: 0 2px 10px rgba(0, 212, 170, 0.3);
+}
+
+.focus-mode-banner .info-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 12px;
+}
+
+.focus-mode-banner .info-item svg {
+    color: var(--focus-accent);
+}
+
+.focus-mode-toast {
+    position: fixed;
+    top: 60px;
+    right: 24px;
+    background: var(--focus-bg);
+    backdrop-filter: var(--focus-glass);
+    -webkit-backdrop-filter: var(--focus-glass);
+    border: 1px solid var(--focus-border);
+    border-left: 4px solid var(--focus-accent);
+    padding: 14px 24px;
+    border-radius: 12px;
+    color: #fff;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    z-index: 10001;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: var(--focus-shadow);
+    transform: translateX(120%);
+    transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.focus-mode-toast.show {
+    transform: translateX(0);
+}
+
+/* ===== FOCUS MODE ACTIVE STYLES ===== */
 
 /* Hide Advertisements */
-body.scout-mode [class*="AdContainer"],
-body.scout-mode [class*="AdSlot"],
-body.scout-mode [class*="AdBanner"],
-body.scout-mode [class*="ad-wrapper"],
-body.scout-mode [class*="advertisement"],
-body.scout-mode [class*="PromoBanner"],
-body.scout-mode [class*="PromoCard"],
-body.scout-mode [data-testid*="ad-"],
-body.scout-mode [id*="google_ads"],
-body.scout-mode [id*="taboola"],
-body.scout-mode [id*="outbrain"],
-body.scout-mode iframe[src*="ads"],
-body.scout-mode iframe[src*="doubleclick"],
-body.scout-mode [class*="SponsorBanner"],
-body.scout-mode [class*="SponsoredContent"] {
+body.focus-mode [class*="AdContainer"],
+body.focus-mode [class*="AdSlot"],
+body.focus-mode [class*="AdBanner"],
+body.focus-mode [class*="ad-wrapper"],
+body.focus-mode [class*="advertisement"],
+body.focus-mode [class*="PromoBanner"],
+body.focus-mode [class*="PromoCard"],
+body.focus-mode [data-testid*="ad-"],
+body.focus-mode [id*="google_ads"],
+body.focus-mode [id*="taboola"],
+body.focus-mode [id*="outbrain"],
+body.focus-mode iframe[src*="ads"],
+body.focus-mode iframe[src*="doubleclick"],
+body.focus-mode [class*="SponsorBanner"],
+body.focus-mode [class*="SponsoredContent"] {
     display: none !important;
 }
 
 /* Hide SofaScore App Promo Sidebar */
-body.scout-mode [class*="AppPromo"],
-body.scout-mode [class*="appPromo"],
-body.scout-mode [class*="app-promo"],
-body.scout-mode [class*="DownloadApp"],
-body.scout-mode [class*="downloadApp"],
-body.scout-mode [class*="download-app"],
-body.scout-mode [class*="MobileApp"],
-body.scout-mode [class*="mobileApp"],
-body.scout-mode [class*="AppBanner"],
-body.scout-mode [class*="appBanner"],
-body.scout-mode [class*="GetApp"],
-body.scout-mode [class*="getApp"],
-body.scout-mode [class*="SidebarPromo"],
-body.scout-mode [class*="sidebarPromo"] {
+body.focus-mode [class*="AppPromo"],
+body.focus-mode [class*="appPromo"],
+body.focus-mode [class*="app-promo"],
+body.focus-mode [class*="DownloadApp"],
+body.focus-mode [class*="downloadApp"],
+body.focus-mode [class*="download-app"],
+body.focus-mode [class*="MobileApp"],
+body.focus-mode [class*="mobileApp"],
+body.focus-mode [class*="AppBanner"],
+body.focus-mode [class*="appBanner"],
+body.focus-mode [class*="GetApp"],
+body.focus-mode [class*="getApp"],
+body.focus-mode [class*="SidebarPromo"],
+body.focus-mode [class*="sidebarPromo"] {
     display: none !important;
 }
 
 /* SofaScore specific: card-component with promo content */
-body.scout-mode .card-component:has(img[src*="ad-block-banners"]),
-body.scout-mode .card-component:has(img[alt*="QR"]),
-body.scout-mode .card-component:has(img[src*="qr-code"]),
-body.scout-mode .card-component:has(span[class*="tt_uppercase"]),
-body.scout-mode div:has(> img[src*="ad-block-banners"]),
-body.scout-mode div:has(img[src*="share-stats"]),
-body.scout-mode div[class*="card-component"]:has(img[alt="QR code"]) {
+body.focus-mode .card-component:has(img[src*="ad-block-banners"]),
+body.focus-mode .card-component:has(img[alt*="QR"]),
+body.focus-mode .card-component:has(img[src*="qr-code"]),
+body.focus-mode .card-component:has(span[class*="tt_uppercase"]),
+body.focus-mode div:has(> img[src*="ad-block-banners"]),
+body.focus-mode div:has(img[src*="share-stats"]),
+body.focus-mode div[class*="card-component"]:has(img[alt="QR code"]) {
     display: none !important;
 }
 
 /* ===== BETTING / ODDS - AGGRESSIVE BUT TARGETED ===== */
 
-/* Featured Odds Section - Multiple approaches */
-body.scout-mode [class*="FeaturedOdds"],
-body.scout-mode [class*="featuredOdds"],
-body.scout-mode [class*="featured-odds"],
-body.scout-mode [class*="OddsWidget"],
-body.scout-mode [class*="OddsSection"],
-body.scout-mode [class*="OddsContainer"],
-body.scout-mode [class*="OddsPanel"],
-body.scout-mode [class*="oddsPanel"],
-body.scout-mode [class*="odds-panel"],
-body.scout-mode [class*="BettingWidget"],
-body.scout-mode [class*="bettingWidget"],
-body.scout-mode [data-testid*="featured-odds"],
-body.scout-mode [data-testid*="odds-widget"],
-body.scout-mode aside[class*="odds" i],
-body.scout-mode section[class*="odds" i] {
+/* Featured Odds Section */
+body.focus-mode [class*="FeaturedOdds"],
+body.focus-mode [class*="featuredOdds"],
+body.focus-mode [class*="featured-odds"],
+body.focus-mode [class*="OddsWidget"],
+body.focus-mode [class*="OddsSection"],
+body.focus-mode [class*="OddsContainer"],
+body.focus-mode [class*="OddsPanel"],
+body.focus-mode [class*="oddsPanel"],
+body.focus-mode [class*="odds-panel"],
+body.focus-mode [class*="BettingWidget"],
+body.focus-mode [class*="bettingWidget"],
+body.focus-mode [data-testid*="featured-odds"],
+body.focus-mode [data-testid*="odds-widget"],
+body.focus-mode aside[class*="odds" i],
+body.focus-mode section[class*="odds" i] {
     display: none !important;
 }
 
-/* Odds Toggle/Switch in navigation - Multiple approaches */
-body.scout-mode [class*="OddsToggle"],
-body.scout-mode [class*="oddsToggle"],
-body.scout-mode [class*="odds-toggle"],
-body.scout-mode [class*="OddsSwitch"],
-body.scout-mode [class*="oddsSwitch"],
-body.scout-mode [class*="odds-switch"],
-body.scout-mode label[class*="odds" i]:has(input[type="checkbox"]),
-body.scout-mode div[class*="odds" i]:has(input[type="checkbox"]),
-body.scout-mode [data-testid*="odds-toggle"],
-body.scout-mode [data-testid*="oddsToggle"] {
+/* Odds Toggle/Switch */
+body.focus-mode [class*="OddsToggle"],
+body.focus-mode [class*="oddsToggle"],
+body.focus-mode [class*="odds-toggle"],
+body.focus-mode [class*="OddsSwitch"],
+body.focus-mode [class*="oddsSwitch"],
+body.focus-mode [class*="odds-switch"],
+body.focus-mode label[class*="odds" i]:has(input[type="checkbox"]),
+body.focus-mode div[class*="odds" i]:has(input[type="checkbox"]),
+body.focus-mode [data-testid*="odds-toggle"],
+body.focus-mode [data-testid*="oddsToggle"] {
     display: none !important;
 }
 
-/* SofaScore specific: toggle_label and toggle_slider classes */
-/* Hide the Odds toggle wrapper - target the container that holds both label and slider */
-body.scout-mode [class*="toggle_label"]:has(~ [class*="toggle_slider"]),
-body.scout-mode [class*="toggle_label"]+[class*="toggle_slider"],
-body.scout-mode [class*="toggle_label"]+[class*="toggle_input"],
-body.scout-mode [class*="toggleLabel"]:has(~ [class*="toggleSlider"]),
-body.scout-mode [class*="toggleLabel"]+[class*="toggleSlider"] {
+/* Hide the Odds toggle wrapper */
+body.focus-mode [class*="toggle_label"]:has(~ [class*="toggle_slider"]),
+body.focus-mode [class*="toggle_label"]+[class*="toggle_slider"],
+body.focus-mode [class*="toggle_label"]+[class*="toggle_input"],
+body.focus-mode [class*="toggleLabel"]:has(~ [class*="toggleSlider"]),
+body.focus-mode [class*="toggleLabel"]+[class*="toggleSlider"] {
     display: none !important;
 }
 
 /* Hide toggle by checking parent wrapper */
-body.scout-mode div:has(> [class*="toggle_label"]):has(> [class*="toggle_slider"]),
-body.scout-mode div:has(> [class*="toggle_label"]):has(> [class*="toggle_input"]),
-body.scout-mode div:has(> span[class*="toggle"]):has(> input[role="switch"]) {
+body.focus-mode div:has(> [class*="toggle_label"]):has(> [class*="toggle_slider"]),
+body.focus-mode div:has(> [class*="toggle_label"]):has(> [class*="toggle_input"]),
+body.focus-mode div:has(> span[class*="toggle"]):has(> input[role="switch"]) {
     display: none !important;
 }
 
 /* Hide toggle containers in filter/nav bars */
-body.scout-mode [class*="Filter"] [class*="switch" i],
-body.scout-mode [class*="filter"] [class*="switch" i],
-body.scout-mode [class*="Filter"] [class*="toggle" i],
-body.scout-mode [class*="filter"] [class*="toggle" i],
-body.scout-mode [class*="TabBar"] [class*="switch" i],
-body.scout-mode [class*="tabBar"] [class*="switch" i] {
+body.focus-mode [class*="Filter"] [class*="switch" i],
+body.focus-mode [class*="filter"] [class*="switch" i],
+body.focus-mode [class*="Filter"] [class*="toggle" i],
+body.focus-mode [class*="filter"] [class*="toggle" i],
+body.focus-mode [class*="TabBar"] [class*="switch" i],
+body.focus-mode [class*="tabBar"] [class*="switch" i] {
     display: none !important;
 }
 
 /* Betting Links */
-body.scout-mode a[href*="bet365"],
-body.scout-mode a[href*="1xbet"],
-body.scout-mode a[href*="betway"],
-body.scout-mode a[href*="unibet"],
-body.scout-mode a[href*="williamhill"],
-body.scout-mode a[href*="paddypower"],
-body.scout-mode a[href*="stake.com"],
-body.scout-mode a[href*="bwin"],
-body.scout-mode a[href*="betfair"],
-body.scout-mode [class*="BookmakerLogo"],
-body.scout-mode [class*="BettingPartner"] {
+body.focus-mode a[href*="bet365"],
+body.focus-mode a[href*="1xbet"],
+body.focus-mode a[href*="betway"],
+body.focus-mode a[href*="unibet"],
+body.focus-mode a[href*="williamhill"],
+body.focus-mode a[href*="paddypower"],
+body.focus-mode a[href*="stake.com"],
+body.focus-mode a[href*="bwin"],
+body.focus-mode a[href*="betfair"] {
     display: none !important;
 }
 
 /* Odds Values in Match Lists */
-body.scout-mode [class*="OddsCell"],
-body.scout-mode [class*="OddsValue"],
-body.scout-mode [class*="oddValue"],
-body.scout-mode [class*="MatchOdds"],
-body.scout-mode [class*="matchOdds"],
-body.scout-mode td[class*="odds" i],
-body.scout-mode [data-testid*="odds-cell"] {
+body.focus-mode [class*="OddsCell"],
+body.focus-mode [class*="OddsValue"],
+body.focus-mode [class*="oddValue"],
+body.focus-mode [class*="MatchOdds"],
+body.focus-mode [class*="matchOdds"],
+body.focus-mode td[class*="odds" i],
+body.focus-mode [data-testid*="odds-cell"] {
     display: none !important;
 }
 
 /* Hide Vote/Poll Widgets */
-body.scout-mode [class*="FanVote"],
-body.scout-mode [class*="MatchVote"],
-body.scout-mode [class*="PredictWinner"],
-body.scout-mode [class*="VoteWidget"],
-body.scout-mode [class*="PollWidget"],
-body.scout-mode [class*="fanVote"],
-body.scout-mode [class*="matchVote"] {
+body.focus-mode [class*="FanVote"],
+body.focus-mode [class*="MatchVote"],
+body.focus-mode [class*="PredictWinner"],
+body.focus-mode [class*="VoteWidget"],
+body.focus-mode [class*="PollWidget"] {
     display: none !important;
 }
 
 /* Hide Social Noise */
-body.scout-mode [class*="Comments"],
-body.scout-mode [class*="SocialShare"],
-body.scout-mode [class*="ShareButtons"] {
+body.focus-mode [class*="Comments"],
+body.focus-mode [class*="SocialShare"],
+body.focus-mode [class*="ShareButtons"] {
     display: none !important;
 }
 

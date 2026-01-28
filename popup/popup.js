@@ -86,41 +86,41 @@ class SofaScoutApp {
       this.switchTab('notifications');
     });
 
-    // Scout Mode toggle
-    const scoutModeBtn = document.getElementById('scoutModeBtn');
-    if (scoutModeBtn) {
-      // Load initial state
-      chrome.storage.local.get(['scoutModeEnabled'], (result) => {
-        if (result.scoutModeEnabled) {
-          scoutModeBtn.classList.add('active');
+    // Focus Mode toggle
+    const focusModeBtn = document.getElementById('focusModeBtn');
+    if (focusModeBtn) {
+      // Load initial state (backwards compatible)
+      chrome.storage.local.get(['focusModeEnabled', 'scoutModeEnabled'], (result) => {
+        if (result.focusModeEnabled || result.scoutModeEnabled) {
+          focusModeBtn.classList.add('active');
         }
       });
 
       // Toggle on click
-      scoutModeBtn.addEventListener('click', async () => {
+      focusModeBtn.addEventListener('click', async () => {
         try {
           const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
           if (tab && tab.url?.includes('sofascore.com')) {
-            const response = await chrome.tabs.sendMessage(tab.id, { action: 'toggleScoutMode' });
-            scoutModeBtn.classList.toggle('active', response?.enabled);
+            const response = await chrome.tabs.sendMessage(tab.id, { action: 'toggleFocusMode' });
+            focusModeBtn.classList.toggle('active', response?.enabled);
           } else {
             // Not on SofaScore, toggle storage directly
-            const result = await chrome.storage.local.get(['scoutModeEnabled']);
-            const newState = !result.scoutModeEnabled;
-            await chrome.storage.local.set({ scoutModeEnabled: newState });
-            scoutModeBtn.classList.toggle('active', newState);
-            this.showToast(newState ? 'Scout Modu aktif - SofaScore\'a gidin' : 'Scout Modu kapatıldı');
+            const result = await chrome.storage.local.get(['focusModeEnabled', 'scoutModeEnabled']);
+            const newState = !(result.focusModeEnabled || result.scoutModeEnabled);
+            await chrome.storage.local.set({ focusModeEnabled: newState, scoutModeEnabled: newState });
+            focusModeBtn.classList.toggle('active', newState);
+            this.showToast(newState ? 'Focus Mode active - go to SofaScore' : 'Focus Mode disabled');
           }
         } catch (e) {
-          console.error('Scout mode toggle error:', e);
+          console.error('Focus mode toggle error:', e);
         }
       });
     }
 
-    // Listen for Scout Mode changes from content script
+    // Listen for Focus Mode changes from content script
     chrome.runtime.onMessage.addListener((request) => {
-      if (request.action === 'scoutModeChanged') {
-        const btn = document.getElementById('scoutModeBtn');
+      if (request.action === 'focusModeChanged' || request.action === 'scoutModeChanged') {
+        const btn = document.getElementById('focusModeBtn');
         if (btn) {
           btn.classList.toggle('active', request.enabled);
         }
