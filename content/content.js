@@ -211,4 +211,188 @@
 
         setTimeout(() => tooltip.remove(), 2000);
     }
+
+    // =========================================
+    // SCOUT MODE - Professional Interface
+    // =========================================
+    
+    let scoutModeEnabled = false;
+
+    function initScoutMode() {
+        // Load saved state
+        chrome.storage.local.get(['scoutModeEnabled'], (result) => {
+            scoutModeEnabled = result.scoutModeEnabled || false;
+            if (scoutModeEnabled) {
+                enableScoutMode();
+            }
+        });
+
+        // Create Scout Mode UI elements
+        createScoutModeUI();
+
+        // Listen for messages from popup
+        chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+            if (request.action === 'toggleScoutMode') {
+                toggleScoutMode();
+                sendResponse({ enabled: scoutModeEnabled });
+            } else if (request.action === 'getScoutModeStatus') {
+                sendResponse({ enabled: scoutModeEnabled });
+            }
+            return true;
+        });
+    }
+
+    function createScoutModeUI() {
+        // Scout Mode Toggle Button (floating)
+        const toggleBtn = document.createElement('button');
+        toggleBtn.className = 'scout-mode-toggle';
+        toggleBtn.innerHTML = '🎯';
+        toggleBtn.title = 'Scout Modu';
+        toggleBtn.addEventListener('click', toggleScoutMode);
+        document.body.appendChild(toggleBtn);
+
+        // Scout Mode Banner
+        const banner = document.createElement('div');
+        banner.className = 'scout-mode-banner';
+        banner.innerHTML = `
+            <span>🎯</span>
+            <span>SCOUT MODU AKTİF</span>
+            <span style="opacity: 0.7">• Reklamlar gizlendi • Bahis oranları kaldırıldı • Veri odaklı görünüm</span>
+        `;
+        document.body.appendChild(banner);
+
+        // Scout Mode Status Pill
+        const statusPill = document.createElement('div');
+        statusPill.className = 'scout-mode-status';
+        statusPill.innerHTML = '🎯 Scout Mode';
+        document.body.appendChild(statusPill);
+    }
+
+    function toggleScoutMode() {
+        scoutModeEnabled = !scoutModeEnabled;
+        
+        if (scoutModeEnabled) {
+            enableScoutMode();
+        } else {
+            disableScoutMode();
+        }
+
+        // Save state
+        chrome.storage.local.set({ scoutModeEnabled });
+
+        // Notify popup
+        chrome.runtime.sendMessage({ 
+            action: 'scoutModeChanged', 
+            enabled: scoutModeEnabled 
+        }).catch(() => {});
+
+        // Show feedback toast
+        showScoutModeToast(scoutModeEnabled ? 'Scout Modu Aktif' : 'Scout Modu Kapalı');
+    }
+
+    function enableScoutMode() {
+        document.body.classList.add('scout-mode');
+        
+        const toggleBtn = document.querySelector('.scout-mode-toggle');
+        if (toggleBtn) {
+            toggleBtn.classList.add('active');
+        }
+
+        // Additional DOM cleanup for stubborn elements
+        cleanupDOM();
+
+        console.log('🎯 Scout Mode: ENABLED');
+    }
+
+    function disableScoutMode() {
+        document.body.classList.remove('scout-mode');
+        
+        const toggleBtn = document.querySelector('.scout-mode-toggle');
+        if (toggleBtn) {
+            toggleBtn.classList.remove('active');
+        }
+
+        console.log('🎯 Scout Mode: DISABLED');
+    }
+
+    function cleanupDOM() {
+        // Aggressive cleanup of known ad/betting elements
+        const selectorsToRemove = [
+            // Common ad patterns
+            '[class*="GoogleAd"]',
+            '[class*="AdSlot"]',
+            '[class*="adUnit"]',
+            '[id*="div-gpt-ad"]',
+            // Betting elements
+            '[class*="OddsCompare"]',
+            '[class*="BettingOdds"]',
+            '[class*="odds-"]',
+            // Social/noise
+            '[class*="SocialProof"]',
+            '[class*="FanVote"]',
+            '[class*="WhoWillWin"]',
+            '[class*="Prediction"]',
+            // Promotions
+            '[class*="PromoCard"]',
+            '[class*="PromoBanner"]'
+        ];
+
+        selectorsToRemove.forEach(selector => {
+            try {
+                document.querySelectorAll(selector).forEach(el => {
+                    el.style.display = 'none';
+                });
+            } catch (e) {
+                // Ignore invalid selectors
+            }
+        });
+
+        // Remove betting-related links
+        document.querySelectorAll('a').forEach(link => {
+            const href = link.href || '';
+            if (href.includes('bet365') || 
+                href.includes('1xbet') || 
+                href.includes('betway') ||
+                href.includes('unibet') ||
+                href.includes('bwin')) {
+                link.style.display = 'none';
+            }
+        });
+    }
+
+    function showScoutModeToast(message) {
+        // Remove existing toast
+        const existingToast = document.querySelector('.scout-mode-toast');
+        if (existingToast) existingToast.remove();
+
+        const toast = document.createElement('div');
+        toast.className = 'scout-pro-toast scout-mode-toast success';
+        toast.innerHTML = `
+            <span style="margin-right: 8px;">🎯</span>
+            <span>${message}</span>
+        `;
+        document.body.appendChild(toast);
+
+        // Animate in
+        requestAnimationFrame(() => {
+            toast.classList.add('show');
+        });
+
+        // Remove after delay
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 300);
+        }, 2500);
+    }
+
+    // Initialize Scout Mode
+    initScoutMode();
+
+    // Re-run cleanup periodically for dynamically loaded content
+    setInterval(() => {
+        if (scoutModeEnabled) {
+            cleanupDOM();
+        }
+    }, 3000);
+
 })();

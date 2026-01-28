@@ -201,3 +201,237 @@
 .scout-pro-stats-close:hover {
     background: rgba(255, 255, 255, 0.2);
 }
+
+/* ===========================================
+   SCOUT MODE - Professional Scouting Interface
+   =========================================== */
+
+/* Scout Mode Toggle Button */
+.scout-mode-toggle {
+    position: fixed;
+    bottom: 80px;
+    right: 20px;
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, #171C1F 0%, #000000 100%);
+    border: 2px solid #00D4AA;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 9998;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    transition: all 0.3s ease;
+    font-size: 20px;
+}
+
+.scout-mode-toggle:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 28px rgba(0, 212, 170, 0.3);
+}
+
+.scout-mode-toggle.active {
+    background: linear-gradient(135deg, #00D4AA 0%, #00B894 100%);
+    border-color: #00D4AA;
+}
+
+.scout-mode-toggle.active::after {
+    content: '✓';
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    width: 18px;
+    height: 18px;
+    background: #00D4AA;
+    border-radius: 50%;
+    font-size: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #000;
+    font-weight: bold;
+}
+
+/* ===== SCOUT MODE ACTIVE STYLES ===== */
+
+/* Hide Advertisements */
+body.scout-mode [class*="Ad"],
+body.scout-mode [class*="ad-"],
+body.scout-mode [class*="advertisement"],
+body.scout-mode [class*="Banner"],
+body.scout-mode [class*="banner"],
+body.scout-mode [class*="promo"],
+body.scout-mode [class*="Promo"],
+body.scout-mode [data-testid*="ad"],
+body.scout-mode [id*="google_ads"],
+body.scout-mode [id*="taboola"],
+body.scout-mode [id*="outbrain"],
+body.scout-mode iframe[src*="ads"],
+body.scout-mode iframe[src*="doubleclick"],
+body.scout-mode [class*="sponsor"],
+body.scout-mode [class*="Sponsor"] {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    overflow: hidden !important;
+}
+
+/* Hide Betting / Odds Elements */
+body.scout-mode [class*="odds"],
+body.scout-mode [class*="Odds"],
+body.scout-mode [class*="betting"],
+body.scout-mode [class*="Betting"],
+body.scout-mode [class*="bet"],
+body.scout-mode [class*="Bet"],
+body.scout-mode [class*="Bookmaker"],
+body.scout-mode [class*="bookmaker"],
+body.scout-mode [data-testid*="odds"],
+body.scout-mode [data-testid*="bet"],
+body.scout-mode a[href*="bet365"],
+body.scout-mode a[href*="1xbet"],
+body.scout-mode a[href*="betway"],
+body.scout-mode a[href*="unibet"],
+body.scout-mode a[href*="william"],
+body.scout-mode a[href*="paddy"],
+body.scout-mode a[href*="stake"],
+body.scout-mode [class*="OddsCell"],
+body.scout-mode [class*="oddValue"] {
+    display: none !important;
+    visibility: hidden !important;
+}
+
+/* Hide Vote/Poll Widgets */
+body.scout-mode [class*="vote"],
+body.scout-mode [class*="Vote"],
+body.scout-mode [class*="poll"],
+body.scout-mode [class*="Poll"],
+body.scout-mode [class*="predict"],
+body.scout-mode [class*="Predict"] {
+    display: none !important;
+}
+
+/* Hide Social Noise */
+body.scout-mode [class*="Comments"],
+body.scout-mode [class*="comments"],
+body.scout-mode [class*="SocialShare"] {
+    display: none !important;
+}
+
+/* Clean Layout - Remove excess padding */
+body.scout-mode [class*="Container"] {
+    max-width: 100% !important;
+}
+
+/* Enhance Data Tables */
+body.scout-mode table,
+body.scout-mode [class*="Table"] {
+    font-size: 13px !important;
+}
+
+body.scout-mode [class*="StatisticsRow"],
+body.scout-mode [class*="StatsRow"] {
+    padding: 8px 12px !important;
+}
+
+/* Scout Mode Indicator Banner */
+.scout-mode-banner {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 32px;
+    background: linear-gradient(90deg, #00D4AA 0%, #00B894 50%, #00D4AA 100%);
+    background-size: 200% 100%;
+    animation: scoutBannerGlow 3s ease infinite;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-family: 'Inter', -apple-system, sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    color: #000;
+    z-index: 10000;
+    box-shadow: 0 2px 10px rgba(0, 212, 170, 0.3);
+    transform: translateY(-100%);
+    transition: transform 0.3s ease;
+}
+
+body.scout-mode .scout-mode-banner {
+    transform: translateY(0);
+}
+
+@keyframes scoutBannerGlow {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+}
+
+/* Push content down when banner is visible */
+body.scout-mode {
+    padding-top: 32px !important;
+}
+
+/* Dark Mode Enhancement for Scout Mode */
+body.scout-mode {
+    --scout-bg: #0a0d0f;
+    --scout-surface: #171C1F;
+    --scout-text: #ffffff;
+    --scout-accent: #00D4AA;
+}
+
+/* Highlight tracked players */
+body.scout-mode .scout-pro-tracked {
+    border: 2px solid #00D4AA !important;
+    box-shadow: 0 0 12px rgba(0, 212, 170, 0.2) !important;
+}
+
+/* Quick Stats Focus */
+body.scout-mode [class*="Rating"] {
+    font-weight: 700 !important;
+    font-size: 1.1em !important;
+}
+
+/* Remove rounded corners for data-dense look */
+body.scout-mode [class*="Card"] {
+    border-radius: 8px !important;
+}
+
+/* Hide "More from..." sections */
+body.scout-mode [class*="MoreFrom"],
+body.scout-mode [class*="Related"],
+body.scout-mode [class*="Recommended"],
+body.scout-mode [class*="Suggested"] {
+    display: none !important;
+}
+
+/* Enhance Player Stats Visibility */
+body.scout-mode [class*="PlayerStatistics"] [class*="Value"],
+body.scout-mode [class*="StatValue"] {
+    color: #00D4AA !important;
+    font-weight: 600 !important;
+}
+
+/* Scout Mode Status Pill */
+.scout-mode-status {
+    position: fixed;
+    bottom: 140px;
+    right: 20px;
+    padding: 6px 12px;
+    background: rgba(0, 212, 170, 0.15);
+    border: 1px solid #00D4AA;
+    border-radius: 20px;
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+    color: #00D4AA;
+    z-index: 9997;
+    opacity: 0;
+    transform: translateX(20px);
+    transition: all 0.3s ease;
+}
+
+body.scout-mode .scout-mode-status {
+    opacity: 1;
+    transform: translateX(0);
+}

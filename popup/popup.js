@@ -85,6 +85,73 @@ class SofaScoutApp {
     document.getElementById('settingsBtn')?.addEventListener('click', () => {
       this.switchTab('notifications');
     });
+
+    // Scout Mode toggle
+    const scoutModeBtn = document.getElementById('scoutModeBtn');
+    if (scoutModeBtn) {
+      // Load initial state
+      chrome.storage.local.get(['scoutModeEnabled'], (result) => {
+        if (result.scoutModeEnabled) {
+          scoutModeBtn.classList.add('active');
+        }
+      });
+
+      // Toggle on click
+      scoutModeBtn.addEventListener('click', async () => {
+        try {
+          const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+          if (tab && tab.url?.includes('sofascore.com')) {
+            const response = await chrome.tabs.sendMessage(tab.id, { action: 'toggleScoutMode' });
+            scoutModeBtn.classList.toggle('active', response?.enabled);
+          } else {
+            // Not on SofaScore, toggle storage directly
+            const result = await chrome.storage.local.get(['scoutModeEnabled']);
+            const newState = !result.scoutModeEnabled;
+            await chrome.storage.local.set({ scoutModeEnabled: newState });
+            scoutModeBtn.classList.toggle('active', newState);
+            this.showToast(newState ? 'Scout Modu aktif - SofaScore\'a gidin' : 'Scout Modu kapatıldı');
+          }
+        } catch (e) {
+          console.error('Scout mode toggle error:', e);
+        }
+      });
+    }
+
+    // Listen for Scout Mode changes from content script
+    chrome.runtime.onMessage.addListener((request) => {
+      if (request.action === 'scoutModeChanged') {
+        const btn = document.getElementById('scoutModeBtn');
+        if (btn) {
+          btn.classList.toggle('active', request.enabled);
+        }
+      }
+    });
+  }
+
+  showToast(message) {
+    // Remove existing toast
+    document.querySelector('.popup-toast')?.remove();
+
+    const toast = document.createElement('div');
+    toast.className = 'popup-toast';
+    toast.style.cssText = `
+      position: fixed;
+      bottom: 60px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--bg-card);
+      color: var(--text-primary);
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-size: 12px;
+      border: 1px solid var(--accent-primary);
+      z-index: 1000;
+      animation: fadeIn 0.2s ease;
+    `;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+
+    setTimeout(() => toast.remove(), 2500);
   }
 
   switchTab(tabId) {

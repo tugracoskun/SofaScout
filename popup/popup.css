@@ -98,6 +98,49 @@ body {
   stroke: var(--accent-purple);
 }
 
+/* Header Actions Container */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Scout Mode Button */
+.scout-mode-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.scout-mode-btn:hover {
+  background: var(--bg-hover);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+.scout-mode-btn.active {
+  background: rgba(0, 212, 170, 0.15);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+.scout-mode-btn .scout-icon {
+  font-size: 14px;
+}
+
+.scout-mode-btn .scout-label {
+  font-family: 'Poppins', sans-serif;
+}
+
 /* Navigation */
 .nav-tabs {
   display: flex;
