@@ -217,6 +217,7 @@
     // =========================================
 
     let focusModeEnabled = false;
+    let lastUrl = window.location.href;
 
     function initFocusMode() {
         // Load saved state (backwards compatible with scoutModeEnabled)
@@ -240,6 +241,37 @@
             }
             return true;
         });
+
+        // Watch for SPA URL changes (SofaScore is a SPA)
+        setInterval(() => {
+            if (lastUrl !== window.location.href) {
+                lastUrl = window.location.href;
+                onUrlChange();
+            }
+        }, 500);
+    }
+
+    function onUrlChange() {
+        if (!focusModeEnabled) return;
+
+        const isMatchPage = window.location.href.includes('/match/');
+        const hasFullFocusMode = document.body.classList.contains('focus-mode');
+        const hasMinimalFocusMode = document.body.classList.contains('focus-mode-minimal');
+
+        if (isMatchPage && hasFullFocusMode) {
+            // Navigated TO a match page - switch to minimal mode
+            document.body.classList.remove('focus-mode');
+            document.body.classList.add('focus-mode-minimal');
+            console.log('🎯 Focus Mode: Switched to minimal (match page detected)');
+        } else if (!isMatchPage && hasMinimalFocusMode) {
+            // Navigated AWAY from match page - switch to full mode
+            document.body.classList.remove('focus-mode-minimal');
+            document.body.classList.add('focus-mode');
+            cleanupDOM();
+            hideOddsToggle();
+            hideAppPromo();
+            console.log('🎯 Focus Mode: Switched to full (left match page)');
+        }
     }
 
     function createFocusModeUI() {
@@ -300,32 +332,40 @@
     }
 
     function enableFocusMode() {
-        document.body.classList.add('focus-mode');
+        // Check if we're on a match detail page FIRST
+        const isMatchPage = window.location.href.includes('/match/');
 
         const toggleBtn = document.querySelector('.focus-mode-toggle');
         if (toggleBtn) {
             toggleBtn.classList.add('active');
         }
 
-        // Additional DOM cleanup for stubborn elements
+        if (isMatchPage) {
+            // On match pages, DON'T add focus-mode class (CSS breaks the page)
+            // Just add minimal class for banner visibility
+            document.body.classList.add('focus-mode-minimal');
+            console.log('🎯 Focus Mode: ENABLED (Match page - no CSS hiding)');
+            return; // Exit early
+        }
+
+        // On other pages, add full focus-mode class
+        document.body.classList.add('focus-mode');
+
         cleanupDOM();
-
-        // Hide Odds toggle specifically
         hideOddsToggle();
-
-        // Hide App promo sidebar
         hideAppPromo();
 
         // Keep trying to hide elements for dynamically loaded content
         const cleanupInterval = setInterval(() => {
-            if (document.body.classList.contains('focus-mode')) {
+            const stillNotMatchPage = !window.location.href.includes('/match/');
+
+            if (document.body.classList.contains('focus-mode') && stillNotMatchPage) {
                 hideOddsToggle();
                 hideAppPromo();
-                cleanupDOM();
             } else {
                 clearInterval(cleanupInterval);
             }
-        }, 1500);
+        }, 2000);
 
         console.log('🎯 Focus Mode: ENABLED');
     }
@@ -378,13 +418,28 @@
 
     function hideAppPromo() {
         try {
-            document.querySelectorAll('.card-component').forEach(card => {
-                const hasAdBanner = card.querySelector('img[src*="ad-block-banners"]');
-                const hasQR = card.querySelector('img[alt*="QR"], img[src*="qr-code"]');
-                const hasExclusively = card.textContent?.includes('Exclusively in the Sofascore');
+            // Skip if we're on a match detail page (URL contains /match/)
+            const isMatchPage = window.location.href.includes('/match/');
 
-                if (hasAdBanner || hasQR || hasExclusively) {
-                    card.style.display = 'none';
+            document.querySelectorAll('.card-component').forEach(card => {
+                // Don't hide cards that are part of match content
+                if (isMatchPage) {
+                    // On match pages, only hide cards that DEFINITELY are promos
+                    const hasAdBanner = card.querySelector('img[src*="ad-block-banners"]');
+                    const hasQRCode = card.querySelector('img[alt="QR code"]');
+
+                    if (hasAdBanner || hasQRCode) {
+                        card.style.display = 'none';
+                    }
+                } else {
+                    // On other pages, use broader detection
+                    const hasAdBanner = card.querySelector('img[src*="ad-block-banners"]');
+                    const hasQR = card.querySelector('img[alt*="QR"], img[src*="qr-code"]');
+                    const hasExclusively = card.textContent?.includes('Exclusively in the Sofascore');
+
+                    if (hasAdBanner || hasQR || hasExclusively) {
+                        card.style.display = 'none';
+                    }
                 }
             });
 
@@ -406,6 +461,7 @@
 
     function disableFocusMode() {
         document.body.classList.remove('focus-mode');
+        document.body.classList.remove('focus-mode-minimal');
 
         const toggleBtn = document.querySelector('.focus-mode-toggle');
         if (toggleBtn) {
@@ -421,14 +477,21 @@
     function cleanupDOM() {
         if (!focusModeEnabled) return;
 
+        // Skip aggressive cleanup on match detail pages
+        const isMatchPage = window.location.href.includes('/match/');
+
         const selectorsToRemove = [
+            // Ads - always safe to remove
             '[class*="GoogleAd"]', '[class*="AdSlot"]', '[class*="AdContainer"]', '[id*="div-gpt-ad"]',
+            // Featured Odds Section
             '[class*="FeaturedOdds"]', '[class*="featuredOdds"]', '[class*="OddsWidget"]', '[class*="OddsSection"]',
             '[class*="OddsPanel"]', '[class*="oddsPanel"]', '[class*="BettingWidget"]',
+            // Odds Toggle
             '[class*="OddsToggle"]', '[class*="oddsToggle"]', '[class*="OddsSwitch"]',
+            // Vote/Poll widgets
             '[class*="FanVote"]', '[class*="MatchVote"]', '[class*="WhoWillWin"]', '[class*="PredictWinner"]',
-            '[class*="PromoCard"]', '[class*="PromoBanner"]',
-            '[class*="Comments"]', '[class*="SocialShare"]', '[class*="ShareButtons"]'
+            // Promotions
+            '[class*="PromoCard"]', '[class*="PromoBanner"]'
         ];
 
         selectorsToRemove.forEach(selector => {
@@ -439,10 +502,9 @@
             } catch (e) { }
         });
 
-        // Hide Odds link in match pages specifically
+        // Hide betting links
         document.querySelectorAll('a').forEach(link => {
             const href = link.href || '';
-            const text = link.textContent || '';
             if (href.includes('bet365') || href.includes('1xbet') || href.includes('betway') ||
                 href.includes('unibet') || href.includes('bwin') || href.includes('betfair')) {
                 link.style.display = 'none';
@@ -477,12 +539,5 @@
 
     // Initialize Focus Mode
     initFocusMode();
-
-    // Periodic cleanup
-    setInterval(() => {
-        if (focusModeEnabled) {
-            cleanupDOM();
-        }
-    }, 2500);
 
 })();

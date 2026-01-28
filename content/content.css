@@ -279,7 +279,8 @@
     /* Added gap */
 }
 
-body.focus-mode .focus-mode-banner {
+body.focus-mode .focus-mode-banner,
+body.focus-mode-minimal .focus-mode-banner {
     top: 0;
 }
 
@@ -354,104 +355,37 @@ body.focus-mode [class*="SponsoredContent"] {
     display: none !important;
 }
 
-/* Hide SofaScore App Promo Sidebar */
+/* SofaScore specific: ONLY exact promo class names */
 body.focus-mode [class*="AppPromo"],
-body.focus-mode [class*="appPromo"],
-body.focus-mode [class*="app-promo"],
 body.focus-mode [class*="DownloadApp"],
-body.focus-mode [class*="downloadApp"],
-body.focus-mode [class*="download-app"],
-body.focus-mode [class*="MobileApp"],
-body.focus-mode [class*="mobileApp"],
-body.focus-mode [class*="AppBanner"],
-body.focus-mode [class*="appBanner"],
-body.focus-mode [class*="GetApp"],
-body.focus-mode [class*="getApp"],
-body.focus-mode [class*="SidebarPromo"],
-body.focus-mode [class*="sidebarPromo"] {
+body.focus-mode [class*="SidebarPromo"] {
     display: none !important;
 }
 
-/* SofaScore specific: card-component with promo content */
-body.focus-mode .card-component:has(img[src*="ad-block-banners"]),
-body.focus-mode .card-component:has(img[alt*="QR"]),
-body.focus-mode .card-component:has(img[src*="qr-code"]),
-body.focus-mode .card-component:has(span[class*="tt_uppercase"]),
-body.focus-mode div:has(> img[src*="ad-block-banners"]),
-body.focus-mode div:has(img[src*="share-stats"]),
-body.focus-mode div[class*="card-component"]:has(img[alt="QR code"]) {
-    display: none !important;
-}
+/* ===== BETTING / ODDS - TARGETED ONLY ===== */
 
-/* ===== BETTING / ODDS - AGGRESSIVE BUT TARGETED ===== */
-
-/* Featured Odds Section */
+/* Featured Odds Section - ONLY specific class names */
 body.focus-mode [class*="FeaturedOdds"],
 body.focus-mode [class*="featuredOdds"],
-body.focus-mode [class*="featured-odds"],
 body.focus-mode [class*="OddsWidget"],
-body.focus-mode [class*="OddsSection"],
-body.focus-mode [class*="OddsContainer"],
-body.focus-mode [class*="OddsPanel"],
-body.focus-mode [class*="oddsPanel"],
-body.focus-mode [class*="odds-panel"],
 body.focus-mode [class*="BettingWidget"],
-body.focus-mode [class*="bettingWidget"],
 body.focus-mode [data-testid*="featured-odds"],
-body.focus-mode [data-testid*="odds-widget"],
-body.focus-mode aside[class*="odds" i],
-body.focus-mode section[class*="odds" i] {
+body.focus-mode [data-testid*="odds-widget"] {
     display: none !important;
 }
 
-/* Odds Toggle/Switch */
+/* Odds Toggle/Switch - ONLY specific class names */
 body.focus-mode [class*="OddsToggle"],
 body.focus-mode [class*="oddsToggle"],
-body.focus-mode [class*="odds-toggle"],
 body.focus-mode [class*="OddsSwitch"],
-body.focus-mode [class*="oddsSwitch"],
-body.focus-mode [class*="odds-switch"],
-body.focus-mode label[class*="odds" i]:has(input[type="checkbox"]),
-body.focus-mode div[class*="odds" i]:has(input[type="checkbox"]),
-body.focus-mode [data-testid*="odds-toggle"],
-body.focus-mode [data-testid*="oddsToggle"] {
+body.focus-mode [data-testid*="odds-toggle"] {
     display: none !important;
 }
 
-/* Hide the Odds toggle wrapper */
-body.focus-mode [class*="toggle_label"]:has(~ [class*="toggle_slider"]),
-body.focus-mode [class*="toggle_label"]+[class*="toggle_slider"],
-body.focus-mode [class*="toggle_label"]+[class*="toggle_input"],
-body.focus-mode [class*="toggleLabel"]:has(~ [class*="toggleSlider"]),
-body.focus-mode [class*="toggleLabel"]+[class*="toggleSlider"] {
-    display: none !important;
-}
-
-/* Hide toggle by checking parent wrapper */
-body.focus-mode div:has(> [class*="toggle_label"]):has(> [class*="toggle_slider"]),
-body.focus-mode div:has(> [class*="toggle_label"]):has(> [class*="toggle_input"]),
-body.focus-mode div:has(> span[class*="toggle"]):has(> input[role="switch"]) {
-    display: none !important;
-}
-
-/* Hide toggle containers in filter/nav bars */
-body.focus-mode [class*="Filter"] [class*="switch" i],
-body.focus-mode [class*="filter"] [class*="switch" i],
-body.focus-mode [class*="Filter"] [class*="toggle" i],
-body.focus-mode [class*="filter"] [class*="toggle" i],
-body.focus-mode [class*="TabBar"] [class*="switch" i],
-body.focus-mode [class*="tabBar"] [class*="switch" i] {
-    display: none !important;
-}
-
-/* Betting Links */
+/* Betting Links - Safe to hide */
 body.focus-mode a[href*="bet365"],
 body.focus-mode a[href*="1xbet"],
 body.focus-mode a[href*="betway"],
-body.focus-mode a[href*="unibet"],
-body.focus-mode a[href*="williamhill"],
-body.focus-mode a[href*="paddypower"],
-body.focus-mode a[href*="stake.com"],
 body.focus-mode a[href*="bwin"],
 body.focus-mode a[href*="betfair"] {
     display: none !important;
@@ -477,8 +411,7 @@ body.focus-mode [class*="PollWidget"] {
     display: none !important;
 }
 
-/* Hide Social Noise */
-body.focus-mode [class*="Comments"],
+/* Hide Social Noise - ONLY sharing buttons, not comments */
 body.focus-mode [class*="SocialShare"],
 body.focus-mode [class*="ShareButtons"] {
     display: none !important;
